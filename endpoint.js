@@ -119,7 +119,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 "parameters": [], // An array of this.getInputParameter()
                 "requestType": "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
                 "requestSchema": this.getSchema({"loginName":"string","password":"string"}),
-                "responseSchema": this.getSchema({"token":"string"}),
+                "responseSchema": this.getSchema({"jwt":"string"}),
                 "disableSwaggerDoc": hiddenOperations.indexOf('authenticateUserAccount') !== -1
             }
         );
@@ -269,7 +269,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async authenticateUserAccount(loginDetails) {
         const jwt = await this.controller.authenticateUser(loginDetails["loginName"], loginDetails["password"]);
-        this.addResultDetail({"token": jwt});
+        this.addResultDetail({"jwt": jwt});
         if (jwt === null) {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
             this.setResult(false, error);
