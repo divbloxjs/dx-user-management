@@ -274,6 +274,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
             this.setResult(false, error);
         } else {
+            this.setCookie("jwt",{"token":jwt});
             this.setResult(true);
         }
     }
