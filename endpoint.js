@@ -34,7 +34,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 "requestSchema": {}, // this.getSchema()
                 "responseSchema":
                     this.getArraySchema(this.dxInstance.getEntitySchema("userAccount"),
-                    "userAccounts"),
+                        "userAccounts"),
                 "disableSwaggerDoc": hiddenOperations.indexOf('listUserAccounts') !== -1
             }
         );
@@ -274,7 +274,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
             this.setResult(false, error);
         } else {
-            this.setCookie("jwt",{"token":jwt});
+            this.setCookie("jwt",jwt);
             this.setResult(true);
         }
     }
