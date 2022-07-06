@@ -23,6 +23,6 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "divbloxjs": "github:divbloxjs/divbloxjs",
-    "dx-utils": "github:divbloxjs/dx-utils"
+    "dx-utilities": "^1.0.0"
   }
 }
