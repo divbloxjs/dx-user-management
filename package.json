@@ -1,28 +1,28 @@
 {
-  "name": "dx-user-management",
-  "version": "1.0.0",
-  "description": "A divbloxjs package that facilitates functionality related to user account management and authentication",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/divbloxjs/dx-user-management.git"
-  },
-  "keywords": [
-    "divbloxjs",
-    "dxUserManagement"
-  ],
-  "author": "Johan Griesel, johan@divblox.com - Divblox (Pty) Ltd",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/divbloxjs/dx-user-management/issues"
-  },
-  "homepage": "https://github.com/divbloxjs/dx-user-management#readme",
-  "dependencies": {
-    "bcrypt": "^5.0.1",
-    "divbloxjs": "github:divbloxjs/divbloxjs",
-    "dx-utilities": "^1.0.0"
-  }
+    "name": "dx-user-management",
+    "version": "1.0.1",
+    "description": "A divbloxjs package that facilitates functionality related to user account management and authentication",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/divbloxjs/dx-user-management.git"
+    },
+    "keywords": [
+        "divbloxjs",
+        "dxUserManagement"
+    ],
+    "author": "Johan Griesel, johan@divblox.com - Divblox (Pty) Ltd",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/divbloxjs/dx-user-management/issues"
+    },
+    "homepage": "https://github.com/divbloxjs/dx-user-management#readme",
+    "dependencies": {
+        "bcrypt": "^5.0.1",
+        "divbloxjs": "github:divbloxjs/divbloxjs",
+        "dx-utilities": "^1.0.0"
+    }
 }
