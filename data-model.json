@@ -1,210 +1,214 @@
 {
-  "userAccount": {
-    "module": "main",
-    "attributes": {
-      "firstName": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": null,
-        "allowNull": true
-      },
-      "middleNames": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "lastName": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": null,
-        "allowNull": true
-      },
-      "maidenName": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": null,
-        "allowNull": true
-      },
-      "nickName": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": null,
-        "allowNull": true
-      },
-      "identificationNumber": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": null,
-        "allowNull": true
-      },
-      "emailAddress": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "loginName": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": "",
-        "allowNull": false
-      },
-      "password": {
-        "type": "varchar",
-        "lengthOrValues": 250,
-        "default": null,
-        "allowNull": true
-      },
-      "profilePictureUrl": {
-        "type": "varchar",
-        "lengthOrValues": 250,
-        "default": null,
-        "allowNull": true
-      },
-      "mainContactNumber": {
-        "type": "varchar",
-        "lengthOrValues": 25,
-        "default": null,
-        "allowNull": true
-      },
-      "secondaryContactNumber": {
-        "type": "varchar",
-        "lengthOrValues": 25,
-        "default": null,
-        "allowNull": true
-      },
-      "title": {
-        "type": "varchar",
-        "lengthOrValues": 25,
-        "default": null,
-        "allowNull": true
-      },
-      "dateOfBirth": {
-        "type": "date",
-        "lengthOrValues": null,
-        "default": null,
-        "allowNull": true
-      },
-      "gender": {
-        "type": "varchar",
-        "lengthOrValues": 25,
-        "default": null,
-        "allowNull": true
-      },
-      "physicalAddressLineOne": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "physicalAddressLineTwo": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "physicalAddressLineThree": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "physicalAddressLineFour": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "postalAddressLineOne": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "postalAddressLineTwo": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "postalAddressLineThree": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "postalAddressLineFour": {
-        "type": "varchar",
-        "lengthOrValues": 150,
-        "default": null,
-        "allowNull": true
-      },
-      "status": {
-        "type": "text",
-        "lengthOrValues": null,
-        "default": null,
-        "allowNull": true
-      },
-      "isAccessBlocked": {
-        "type": "boolean",
-        "lengthOrValues": null,
-        "default": null,
-        "allowNull": true
-      },
-      "blockedReason": {
-        "type": "text",
-        "lengthOrValues": null,
-        "default": null,
-        "allowNull": true
-      }
+    "userAccount": {
+        "module": "main",
+        "attributes": {
+            "firstName": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": null,
+                "allowNull": true
+            },
+            "middleNames": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "lastName": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": null,
+                "allowNull": true
+            },
+            "maidenName": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": null,
+                "allowNull": true
+            },
+            "nickName": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": null,
+                "allowNull": true
+            },
+            "identificationNumber": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": null,
+                "allowNull": true
+            },
+            "emailAddress": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "loginName": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": "",
+                "allowNull": false
+            },
+            "password": {
+                "type": "varchar",
+                "lengthOrValues": 250,
+                "default": null,
+                "allowNull": true
+            },
+            "profilePictureUrl": {
+                "type": "varchar",
+                "lengthOrValues": 250,
+                "default": null,
+                "allowNull": true
+            },
+            "mainContactNumber": {
+                "type": "varchar",
+                "lengthOrValues": 25,
+                "default": null,
+                "allowNull": true
+            },
+            "secondaryContactNumber": {
+                "type": "varchar",
+                "lengthOrValues": 25,
+                "default": null,
+                "allowNull": true
+            },
+            "title": {
+                "type": "varchar",
+                "lengthOrValues": 25,
+                "default": null,
+                "allowNull": true
+            },
+            "dateOfBirth": {
+                "type": "date",
+                "lengthOrValues": null,
+                "default": null,
+                "allowNull": true
+            },
+            "gender": {
+                "type": "varchar",
+                "lengthOrValues": 25,
+                "default": null,
+                "allowNull": true
+            },
+            "physicalAddressLineOne": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "physicalAddressLineTwo": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "physicalAddressLineThree": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "physicalAddressLineFour": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "postalAddressLineOne": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "postalAddressLineTwo": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "postalAddressLineThree": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "postalAddressLineFour": {
+                "type": "varchar",
+                "lengthOrValues": 150,
+                "default": null,
+                "allowNull": true
+            },
+            "status": {
+                "type": "text",
+                "lengthOrValues": null,
+                "default": null,
+                "allowNull": true
+            },
+            "isAccessBlocked": {
+                "type": "boolean",
+                "lengthOrValues": null,
+                "default": null,
+                "allowNull": true
+            },
+            "blockedReason": {
+                "type": "text",
+                "lengthOrValues": null,
+                "default": null,
+                "allowNull": true
+            },
+            "isEmailVerified": {
+                "type": "boolean",
+                "lengthOrValues": null,
+                "default": 0,
+                "allowNull": true
+            }
+        },
+        "indexes": [
+            {
+                "attribute": "loginName",
+                "indexName": "userAccount_loginName",
+                "indexChoice": "unique",
+                "type": "BTREE"
+            }
+        ],
+        "relationships": {
+            "oneTimeToken": ["userAccount"]
+        },
+        "options": {
+            "enforceLockingConstraints": true,
+            "isAuditEnabled": true
+        }
     },
-    "indexes": [
-      {
-        "attribute": "loginName",
-        "indexName": "userAccount_loginName",
-        "indexChoice": "unique",
-        "type": "BTREE"
-      }
-    ],
-    "relationships": {
-      "oneTimeToken":[
-        "userAccount"
-      ]
-    },
-    "options": {
-      "enforceLockingConstraints": true,
-      "isAuditEnabled": true
+    "oneTimeToken": {
+        "module": "main",
+        "attributes": {
+            "token": {
+                "type": "varchar",
+                "lengthOrValues": 50,
+                "default": "",
+                "allowNull": false
+            },
+            "expiryTime": {
+                "type": "datetime",
+                "lengthOrValues": null,
+                "default": null,
+                "allowNull": true
+            }
+        },
+        "indexes": [
+            {
+                "attribute": "token",
+                "indexName": "oneTimeToken_token",
+                "indexChoice": "unique",
+                "type": "BTREE"
+            }
+        ],
+        "relationships": {},
+        "options": {
+            "enforceLockingConstraints": false,
+            "isAuditEnabled": false
+        }
     }
-  },
-  "oneTimeToken": {
-    "module": "main",
-    "attributes": {
-      "token": {
-        "type": "varchar",
-        "lengthOrValues": 50,
-        "default": "",
-        "allowNull": false
-      },
-      "expiryTime": {
-        "type": "datetime",
-        "lengthOrValues": null,
-        "default": null,
-        "allowNull": true
-      }
-    },
-    "indexes": [
-      {
-        "attribute": "token",
-        "indexName": "oneTimeToken_token",
-        "indexChoice": "unique",
-        "type": "BTREE"
-      }
-    ],
-    "relationships": {},
-    "options": {
-      "enforceLockingConstraints": false,
-      "isAuditEnabled": false
-    }
-  }
 }

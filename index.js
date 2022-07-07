@@ -53,6 +53,25 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 "utf-8"
             );
         }
+
+        if (typeof this.packageOptions["frontEndVerifyAccountPath"] === "undefined") {
+            this.packageOptions["frontEndVerifyAccountPath"] = "/verify-account";
+        }
+
+        this.verifyAccountPath =
+            this.packageOptions["frontEndUrlBase"] + this.packageOptions["frontEndVerifyAccountPath"];
+
+        this.verifyAccountMessageTemplate =
+            "" +
+            "Dear [firstName],<br><br>" +
+            'Use <a href="[verifyAccountLink]">this link</a> to verify your email address';
+
+        if (typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined") {
+            this.forgottenPasswordMessageTemplate = fs.readFileSync(
+                this.packageOptions["verifyAccountMessageTemplatePath"],
+                "utf-8"
+            );
+        }
     }
 
     /**
@@ -358,7 +377,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
     }
 
     /**
-     * Generates a new token that will be used to reset a given user or users' password. This token is automatically
+     * Generates and sends a new token that will be used to reset a given user or users' password. This token is automatically
      * sent via email to the relevant recipient(s). Note, your project should implement the "sendEmail" function provided
      * in divbloxjs in order for this function to work correctly.
      * @param {string} emailAddress The email address of the user(s) to generate a token for
@@ -366,9 +385,114 @@ class DxUserManagement extends divbloxPackageControllerBase {
      * populated in the error array. Note, the token could've been successfully generated even if this function returns
      * false.
      */
-    async generatePasswordResetToken(emailAddress) {
-        // Delete any expired oneTimeTokens
-        ////////////////////////////////////////////////////////////////////////////////
+    async sendPasswordResetToken(emailAddress) {
+        const userAccounts = await this.getUserAccountsFromEmailAddress(emailAddress);
+
+        const oneTimeTokenStr = await this.generateOneTimeToken(userAccounts);
+
+        if (oneTimeTokenStr === null) {
+            this.populateError("Error generating oneTimeToken", true, true);
+
+            // We return true here for security reasons. We don't this operation to be exploited to discover accounts
+            return true;
+        }
+
+        let emailMessage = this.forgottenPasswordMessageTemplate.replace("[firstName]", "user");
+
+        emailMessage = emailMessage.replace(
+            "[resetPasswordLink]",
+            this.resetPasswordPath + "?token=" + oneTimeTokenStr
+        );
+
+        if (
+            !(await this.dxInstance.sendEmail({
+                fromAddress: this.packageOptions["noReplyEmailAddress"],
+                toAddresses: [emailAddress],
+                subject: "Reset your password",
+                messageHtml: emailMessage,
+            }))
+        ) {
+            this.populateError(this.dxInstance.getError(), true, true);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Generates and sends a new token that will be used to verify a given user or users' userAccount. This token is automatically
+     * sent via email to the relevant recipient(s). Note, your project should implement the "sendEmail" function provided
+     * in divbloxjs in order for this function to work correctly.
+     * @param {string} emailAddress The email address of the user(s) to generate a token for
+     * @return {Promise<boolean>} Returns true if the token was successfully sent, false otherwise with an error
+     * populated in the error array. Note, the token could've been successfully generated even if this function returns
+     * false.
+     */
+    async sendAccountVerificationToken(emailAddress) {
+        const userAccounts = await this.getUserAccountsFromEmailAddress(emailAddress);
+
+        const oneTimeTokenStr = await this.generateOneTimeToken(userAccounts);
+
+        if (oneTimeTokenStr === null) {
+            this.populateError("Error generating oneTimeToken", true, true);
+
+            // We return true here for security reasons. We don't this operation to be exploited to discover accounts
+            return true;
+        }
+
+        let emailMessage = this.verifyAccountMessageTemplate.replace("[firstName]", "user");
+
+        emailMessage = emailMessage.replace(
+            "[verifyAccountLink]",
+            this.verifyAccountPath + "?token=" + oneTimeTokenStr
+        );
+
+        if (
+            !(await this.dxInstance.sendEmail({
+                fromAddress: this.packageOptions["noReplyEmailAddress"],
+                toAddresses: [emailAddress],
+                subject: "Verify your email address",
+                messageHtml: emailMessage,
+            }))
+        ) {
+            this.populateError(this.dxInstance.getError(), true, true);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Gets all the user accounts that match the provided email address
+     * @param {string} emailAddress The email address to check for accounts on
+     * @returns {Promise<userAccount[]>} An array of userAccount objects
+     */
+    async getUserAccountsFromEmailAddress(emailAddress) {
+        const userAccountsQuery =
+            "SELECT " +
+            this.dxInstance.dataLayer.getSqlReadyName("id") +
+            " FROM " +
+            this.dxInstance.dataLayer.getSqlReadyName("userAccount") +
+            " " +
+            "WHERE " +
+            this.dxInstance.dataLayer.getSqlReadyName("emailAddress") +
+            " = '" +
+            emailAddress +
+            "'";
+
+        return await this.dxInstance.dataLayer.executeQuery(
+            userAccountsQuery,
+            this.dxInstance.dataLayer.getModuleNameFromEntityName("userAccount")
+        );
+    }
+
+    /**
+     * Generates a oneTimeToken and links it to the given user accounts
+     * @param {[]} userAccounts An array of userAccount objects.
+     * @return {Promise<string|null>} A valid token or null if an error occurred
+     */
+    async generateOneTimeToken(userAccounts = []) {
+        //#region Delete any expired oneTimeTokens
         const dateNow = dxUtils.getLocalDateStringFromCurrentDate(new Date());
 
         const expiredTokensQuery =
@@ -414,30 +538,13 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 this.dxInstance.dataLayer.getModuleNameFromEntityName("oneTimeToken")
             );
         }
-        ////////////////////////////////////////////////////////////////////////////////
-
-        const userAccountsQuery =
-            "SELECT " +
-            this.dxInstance.dataLayer.getSqlReadyName("id") +
-            " FROM " +
-            this.dxInstance.dataLayer.getSqlReadyName("userAccount") +
-            " " +
-            "WHERE " +
-            this.dxInstance.dataLayer.getSqlReadyName("emailAddress") +
-            " = '" +
-            emailAddress +
-            "'";
-
-        const userAccounts = await this.dxInstance.dataLayer.executeQuery(
-            userAccountsQuery,
-            this.dxInstance.dataLayer.getModuleNameFromEntityName("userAccount")
-        );
+        //#endregion
 
         if (Object.keys(userAccounts).length === 0) {
             this.populateError("No users were found", true, true);
 
             // We return true here for security reasons. We don't this operation to be exploited to discover accounts
-            return true;
+            return null;
         }
 
         let userAccountIdStr = "";
@@ -460,7 +567,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
 
         if (!(await oneTimeToken.save())) {
             this.populateError(oneTimeToken.getError(), true, true);
-            return false;
+            return null;
         }
 
         const updateUserAccountsQuery =
@@ -483,29 +590,10 @@ class DxUserManagement extends divbloxPackageControllerBase {
 
         if (queryResult === null) {
             this.populateError(this.dxInstance.dataLayer.getError(), true, true);
-            return false;
+            return null;
         }
 
-        let emailMessage = this.forgottenPasswordMessageTemplate.replace("[firstName]", "user");
-
-        emailMessage = emailMessage.replace(
-            "[resetPasswordLink]",
-            this.resetPasswordPath + "?token=" + oneTimeToken.data.token
-        );
-
-        if (
-            !(await this.dxInstance.sendEmail({
-                fromAddress: this.packageOptions["noReplyEmailAddress"],
-                toAddresses: [emailAddress],
-                subject: "Reset your password",
-                messageHtml: emailMessage,
-            }))
-        ) {
-            this.populateError(this.dxInstance.getError(), true, true);
-            return false;
-        }
-
-        return true;
+        return oneTimeToken.data.token;
     }
 
     /**
@@ -516,31 +604,15 @@ class DxUserManagement extends divbloxPackageControllerBase {
      * the error array.
      */
     async resetPasswordFromToken(token, newPassword) {
-        if (typeof token === "undefined") {
-            this.populateError("Invalid token provided", true, true);
-            return false;
-        }
-
         if (typeof newPassword === "undefined" || newPassword.length < 3) {
             this.populateError("Invalid password provided", true, true);
             return false;
         }
 
-        const oneTimeToken = new oneTimeTokenController(this.dxInstance);
+        const oneTimeToken = await this.getVerifiedOneTimeToken(token);
 
-        if (!(await oneTimeToken.loadByField("token", token))) {
+        if (oneTimeToken === null) {
             this.populateError("Invalid token provided", true, true);
-            return false;
-        }
-
-        const currentTimeStamp = new Date().getTime() / 1000;
-        const storedDateTime = new Date(oneTimeToken.data.expiryTime);
-        const storedTimeStamp = storedDateTime.getTime() / 1000;
-
-        if (currentTimeStamp >= storedTimeStamp) {
-            await oneTimeToken.delete();
-
-            this.populateError("Expired token provided", true, true);
             return false;
         }
 
@@ -605,6 +677,102 @@ class DxUserManagement extends divbloxPackageControllerBase {
         await oneTimeToken.delete();
 
         return true;
+    }
+
+    /**
+     * Verifies the relevant userAccount using the token provided for the currently authenticated userAccount
+     * @param {string} token The account verification token to check on
+     * @param {string} uniqueIdentifier The current globalIdentifier uniqueIdentifier
+     * @return {Promise<boolean>} True if the account was successfully verified, false otherwise with an error populated in
+     * the error array.
+     */
+    async verifyAccountFromToken(token, uniqueIdentifier) {
+        const oneTimeToken = await this.getVerifiedOneTimeToken(token);
+
+        if (oneTimeToken === null) {
+            this.populateError("Invalid token provided", true, true);
+            return false;
+        }
+
+        const currentUserAccount = await this.getCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier);
+
+        if (currentUserAccount === null) {
+            this.populateError("Not authorized", true, true);
+            return false;
+        }
+
+        console.dir(currentUserAccount.data);
+
+        if (currentUserAccount.data.oneTimeTokenUserAccount !== oneTimeToken.data.id) {
+            dxUtils.printInfoMessage(currentUserAccount.data.oneTimeTokenUserAccount + " vs " + oneTimeToken.data.id);
+            this.populateError("Invalid token provided", true, true);
+            return false;
+        }
+
+        currentUserAccount.data.isEmailVerified = true;
+
+        if (!(await currentUserAccount.save())) {
+            this.populateError(currentUserAccount.getError(), true, true);
+            return false;
+        }
+
+        await oneTimeToken.delete();
+
+        return true;
+    }
+
+    /**
+     * Verifies that the given token exists and has not expired yet and returns it.
+     * @param {string} token The token to check for
+     * @returns {Promise<oneTimeTokenController|null>} A valid oneTimeTokenController or null, if the token is invalid
+     */
+    async getVerifiedOneTimeToken(token) {
+        if (typeof token === "undefined") {
+            this.populateError("Invalid token provided", true, true);
+            return null;
+        }
+
+        const oneTimeToken = new oneTimeTokenController(this.dxInstance);
+
+        if (!(await oneTimeToken.loadByField("token", token))) {
+            this.populateError("Invalid token provided", true, true);
+            return null;
+        }
+
+        const currentTimeStamp = new Date().getTime() / 1000;
+        const storedDateTime = new Date(oneTimeToken.data.expiryTime);
+        const storedTimeStamp = storedDateTime.getTime() / 1000;
+
+        if (currentTimeStamp >= storedTimeStamp) {
+            await oneTimeToken.delete();
+
+            this.populateError("Expired token provided", true, true);
+            return null;
+        }
+
+        return oneTimeToken;
+    }
+
+    /**
+     * Gets the current userAccount from the provided globalIdentifier
+     * @param {*} uniqueIdentifier The current unique identifier received from the provided JWT
+     * @returns {Promise<userAccountController|null>} Returns the current userAccount if found, or null otherwise
+     */
+    async getCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier = null) {
+        const currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
+
+        if (currentGlobalIdentifier === null) {
+            this.populateError("Invalid globalIdentifier uniqueIdentifier provided", true, true);
+            return null;
+        }
+        const currentUserAccount = new userAccountController(this.dxInstance);
+
+        if (!(await currentUserAccount.load(currentGlobalIdentifier.linkedEntityId))) {
+            this.populateError(currentUserAccount.getError(), true, true);
+            return null;
+        }
+        console.dir(currentUserAccount.data);
+        return currentUserAccount;
     }
 }
 
