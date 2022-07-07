@@ -34,7 +34,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 "requestSchema": {}, // this.getSchema()
                 "responseSchema":
                     this.getArraySchema(this.dxInstance.getEntitySchema("userAccount"),
-                        "userAccounts"),
+                    "userAccounts"),
                 "disableSwaggerDoc": hiddenOperations.indexOf('listUserAccounts') !== -1
             }
         );

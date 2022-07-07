@@ -367,6 +367,8 @@ class DxUserManagement extends divbloxPackageControllerBase {
      * false.
      */
     async generatePasswordResetToken(emailAddress) {
+        // Delete any expired oneTimeTokens
+        ////////////////////////////////////////////////////////////////////////////////
         const dateNow = dxUtils.getLocalDateStringFromCurrentDate(new Date());
 
         const expiredTokensQuery =
@@ -412,6 +414,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 this.dxInstance.dataLayer.getModuleNameFromEntityName("oneTimeToken")
             );
         }
+        ////////////////////////////////////////////////////////////////////////////////
 
         const userAccountsQuery =
             "SELECT " +
@@ -494,6 +497,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
             !(await this.dxInstance.sendEmail({
                 fromAddress: this.packageOptions["noReplyEmailAddress"],
                 toAddresses: [emailAddress],
+                subject: "Reset your password",
                 messageHtml: emailMessage,
             }))
         ) {
