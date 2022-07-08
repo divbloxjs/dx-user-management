@@ -16,11 +16,23 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         this.endpointDescription = "dxUserManagement endpoint"; // Change this to be more descriptive of the endpoint
 
         this.controller = new dxUserManagementController(dxInstance);
-        const hiddenOperations = this.controller.packageOptions["hiddenOperations"];
+
+        const hiddenOperations =
+            typeof this.controller.packageOptions["hiddenOperations"] !== "undefined"
+                ? this.controller.packageOptions["hiddenOperations"]
+                : [];
+
+        const operationAccess =
+            typeof this.controller.packageOptions["operationAccess"] !== "undefined"
+                ? this.controller.packageOptions["operationAccess"]
+                : {};
 
         const listUserAccounts = this.getOperationDefinition({
             operationName: "listUserAccounts",
-            allowedAccess: ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["listUserAccounts"] !== "undefined"
+                    ? operationAccess["listUserAccounts"]
+                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Lists the current user accounts in the database",
             operationDescription: "Lists the current user accounts in the database",
             parameters: [
@@ -37,7 +49,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const updateUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
-            allowedAccess: ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["updateUserAccount"] !== "undefined"
+                    ? operationAccess["updateUserAccount"]
+                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Modifies a user account",
             operationDescription:
                 "Modifies a user account with the details provided.<br>" +
@@ -49,9 +64,38 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             disableSwaggerDoc: hiddenOperations.indexOf("updateUserAccount") !== -1,
         });
 
+        const updateCurrentUserAccount = this.getOperationDefinition({
+            operationName: "updateCurrentUserAccount",
+            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Modifies the current user account",
+            operationDescription:
+                "Modifies the current user account with the details provided.<br>" +
+                "If a password is supplied, this will be properly hashed and salted for later comparison.",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "PUT", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
+        });
+
+        const uploadProfilePicture = this.getOperationDefinition({
+            operationName: "uploadProfilePicture",
+            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Saves the uploaded picture as the current user's profile picture",
+            operationDescription: "Saves the uploaded picture as the current user's profile picture",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {},
+            responseSchema: this.getSchema({ fileUrl: "string" }),
+            disableSwaggerDoc: hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
+        });
+
         const createUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
-            allowedAccess: ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["createUserAccount"] !== "undefined"
+                    ? operationAccess["createUserAccount"]
+                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Creates a new user account",
             operationDescription:
                 "Creates a new user account with the details provided.<br>" +
@@ -67,7 +111,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const deleteUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
-            allowedAccess: ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["deleteUserAccount"] !== "undefined"
+                    ? operationAccess["deleteUserAccount"]
+                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Deletes a user account",
             operationDescription: "Deletes a user account matching the provided id",
             parameters: [this.getInputParameter({ name: "id", type: "query" })], // An array of this.getInputParameter()
@@ -111,6 +158,18 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestSchema: this.getSchema({ loginName: "string", password: "string" }),
             responseSchema: this.getSchema({ jwt: "string" }),
             disableSwaggerDoc: hiddenOperations.indexOf("authenticateUserAccount") !== -1,
+        });
+
+        const logoutUserAccount = this.getOperationDefinition({
+            operationName: "logout",
+            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Logs out a user account",
+            operationDescription: "Logs out a user account by removing the jwt http-only cookie from the browser",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {},
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: hiddenOperations.indexOf("logoutUserAccount") !== -1,
         });
 
         const sendPasswordResetToken = this.getOperationDefinition({
@@ -169,8 +228,11 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             listUserAccounts,
             createUserAccount,
             updateUserAccount,
+            updateCurrentUserAccount,
+            uploadProfilePicture,
             deleteUserAccount,
             authenticateUserAccount,
+            logoutUserAccount,
             registerUserAccount,
             sendPasswordResetToken,
             resetPasswordFromToken,
@@ -221,8 +283,17 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                         break;
                 }
                 break;
+            case "updateCurrentUserAccount":
+                await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
+                break;
+            case "uploadProfilePicture":
+                await this.uploadProfilePicture(request, this.currentGlobalIdentifier);
+                break;
             case "authenticate":
                 await this.authenticateUserAccount(request.body);
+                break;
+            case "logout":
+                this.logoutUserAccount();
                 break;
             case "registerUser":
                 await this.registerUserAccount(request.body);
@@ -277,6 +348,44 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
     }
 
+    async updateCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
+        if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+            return;
+        }
+
+        if (!(await this.controller.updateCurrentUserAccount(userAccountDetail))) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+        } else {
+            this.setResult(true, "Details updated!");
+        }
+    }
+
+    async uploadProfilePicture(request, uniqueIdentifier) {
+        if (!request.files || Object.keys(request.files).length === 0) {
+            this.setResult(false, "No files were uploaded");
+            return;
+        }
+
+        if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+            return;
+        }
+
+        const fileStaticUrl = await this.controller.uploadProfilePicture(Object.values(request.files)[0]);
+        if (fileStaticUrl === null) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+            return;
+        }
+
+        this.addResultDetail({ fileUrl: fileStaticUrl });
+        this.setResult(true, "File uploaded");
+    }
+
     async deleteUserAccount(userAccountId) {
         if (!(await this.controller.deleteUserAccount(userAccountId))) {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
@@ -296,6 +405,11 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             this.setCookie("jwt", jwt);
             this.setResult(true);
         }
+    }
+
+    logoutUserAccount() {
+        this.setCookie("jwt", null, true, true, -1);
+        this.setResult(true, "User logged out");
     }
 
     async registerUserAccount(userAccountDetail) {
@@ -341,7 +455,12 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
     }
 
     async verifyAccountFromToken(token, uniqueIdentifier) {
-        if (!(await this.controller.verifyAccountFromToken(token, uniqueIdentifier))) {
+        if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+        }
+
+        if (!(await this.controller.verifyAccountFromToken(token))) {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
             this.setResult(false, error);
         } else {

@@ -72,6 +72,12 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 "utf-8"
             );
         }
+
+        if (typeof this.packageOptions["forceLoginNameToEmailAddress"] === "undefined") {
+            this.packageOptions["forceLoginNameToEmailAddress"] = false;
+        }
+
+        this.currentUserAccount = null;
     }
 
     /**
@@ -195,31 +201,54 @@ class DxUserManagement extends divbloxPackageControllerBase {
      */
     async updateUserAccount(userAccountId = -1, userAccountDetails) {
         const userAccount = new userAccountController(this.dxInstance);
+
         if (!(await userAccount.load(userAccountId))) {
             this.populateError(userAccount.getError(), true, true);
             return false;
         }
 
-        for (const key of Object.keys(userAccountDetails)) {
-            userAccount.data[key] = userAccountDetails[key];
-        }
         if (typeof userAccountDetails["emailAddress"] !== "undefined" && userAccountDetails["emailAddress"] !== null) {
             if (!dxUtils.validateEmailAddress(userAccountDetails["emailAddress"])) {
                 this.populateError("Invalid email address provided", true, true);
                 return false;
             }
+
+            if (this.packageOptions["forceLoginNameToEmailAddress"]) {
+                userAccountDetails["loginName"] = userAccountDetails["emailAddress"];
+            }
+
+            if (userAccount.lastLoadedData["emailAddress"] !== userAccountDetails["emailAddress"]) {
+                userAccountDetails["isEmailVerified"] = false;
+            }
+        } else if (
+            typeof userAccountDetails["loginName"] !== "undefined" &&
+            userAccountDetails["loginName"] !== null &&
+            userAccountDetails["loginName"] !== "" &&
+            this.packageOptions["forceLoginNameToEmailAddress"]
+        ) {
+            this.populateError("loginName cannot differ from emailAddress", true, true);
+            return false;
         }
 
-        if (userAccountDetails["loginName"] !== "") {
+        if (
+            typeof userAccountDetails["loginName"] !== "undefined" &&
+            userAccountDetails["loginName"] !== null &&
+            userAccountDetails["loginName"] !== ""
+        ) {
             const existingUserAccount = await this.dxInstance.dataLayer.readByField(
                 "userAccount",
                 "loginName",
                 userAccountDetails["loginName"]
             );
+
             if (existingUserAccount !== null && existingUserAccount.id !== userAccountId) {
                 this.populateError("User already exists", true, true);
                 return false;
             }
+        }
+
+        for (const key of Object.keys(userAccountDetails)) {
+            userAccount.data[key] = userAccountDetails[key];
         }
 
         if (typeof userAccountDetails["password"] !== "undefined" && userAccountDetails["password"] !== null) {
@@ -235,6 +264,45 @@ class DxUserManagement extends divbloxPackageControllerBase {
         }
 
         return true;
+    }
+
+    /**
+     * Updates the current userAccount with the data provided
+     * @param {*} userAccountDetails Should match the userAccount schema
+     * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
+     */
+    async updateCurrentUserAccount(userAccountDetails) {
+        if (this.currentUserAccount === null) {
+            this.populateError("Invalid permissions", true, true);
+            return false;
+        }
+        return await this.updateUserAccount(this.currentUserAccount.data.id, userAccountDetails);
+    }
+    /**
+     * Handles an uploaded profile picure
+     * @param {express-fileupload} uploadedFile An instance of an uploaded file
+     * @returns {Promise<string|null>} The static path of the uploaded file or null if an error occurred
+     */
+    async uploadProfilePicture(uploadedFile) {
+        if (this.currentUserAccount === null) {
+            this.populateError("Invalid permissions", true, true);
+            return false;
+        }
+
+        const uploadPath = this.dxInstance.getFileUploadPath() + "/" + uploadedFile.name;
+
+        try {
+            await uploadedFile.mv(uploadPath);
+
+            const finalFilePath = await this.dxInstance.processUploadedFile(uploadedFile.name);
+
+            await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
+
+            return finalFilePath;
+        } catch (error) {
+            this.populateError("File upload error: " + error, true, true);
+            return null;
+        }
     }
 
     /**
@@ -319,13 +387,27 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 return -1;
             }
         } else {
-            if (userAccount.data["loginName"] === "") {
+            if (this.packageOptions["forceLoginNameToEmailAddress"]) {
+                this.populateError("Email address must be provided", true, true);
+                return -1;
+            }
+
+            if (
+                typeof userAccount.data["loginName"] === "undefined" ||
+                userAccount.data["loginName"] === null ||
+                userAccount.data["loginName"] === ""
+            ) {
                 this.populateError("Either 'loginName' or 'emailAddress' must be provided", true, true);
                 return -1;
             }
         }
 
-        if (userAccount.data["loginName"] === "") {
+        if (
+            typeof userAccount.data["loginName"] === "undefined" ||
+            userAccount.data["loginName"] === null ||
+            userAccount.data["loginName"] === "" ||
+            this.packageOptions["forceLoginNameToEmailAddress"]
+        ) {
             userAccount.data["loginName"] = userAccount.data["emailAddress"];
         }
 
@@ -682,11 +764,10 @@ class DxUserManagement extends divbloxPackageControllerBase {
     /**
      * Verifies the relevant userAccount using the token provided for the currently authenticated userAccount
      * @param {string} token The account verification token to check on
-     * @param {string} uniqueIdentifier The current globalIdentifier uniqueIdentifier
      * @return {Promise<boolean>} True if the account was successfully verified, false otherwise with an error populated in
      * the error array.
      */
-    async verifyAccountFromToken(token, uniqueIdentifier) {
+    async verifyAccountFromToken(token) {
         const oneTimeToken = await this.getVerifiedOneTimeToken(token);
 
         if (oneTimeToken === null) {
@@ -694,25 +775,23 @@ class DxUserManagement extends divbloxPackageControllerBase {
             return false;
         }
 
-        const currentUserAccount = await this.getCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier);
-
-        if (currentUserAccount === null) {
+        if (this.currentUserAccount === null) {
             this.populateError("Not authorized", true, true);
             return false;
         }
 
-        console.dir(currentUserAccount.data);
-
-        if (currentUserAccount.data.oneTimeTokenUserAccount !== oneTimeToken.data.id) {
-            dxUtils.printInfoMessage(currentUserAccount.data.oneTimeTokenUserAccount + " vs " + oneTimeToken.data.id);
+        if (this.currentUserAccount.data.oneTimeTokenUserAccount !== oneTimeToken.data.id) {
+            dxUtils.printInfoMessage(
+                this.currentUserAccount.data.oneTimeTokenUserAccount + " vs " + oneTimeToken.data.id
+            );
             this.populateError("Invalid token provided", true, true);
             return false;
         }
 
-        currentUserAccount.data.isEmailVerified = true;
+        this.currentUserAccount.data.isEmailVerified = true;
 
-        if (!(await currentUserAccount.save())) {
-            this.populateError(currentUserAccount.getError(), true, true);
+        if (!(await this.currentUserAccount.save())) {
+            this.populateError(this.currentUserAccount.getError(), true, true);
             return false;
         }
 
@@ -754,25 +833,25 @@ class DxUserManagement extends divbloxPackageControllerBase {
     }
 
     /**
-     * Gets the current userAccount from the provided globalIdentifier
+     * Sets the current userAccount from the provided globalIdentifier
      * @param {*} uniqueIdentifier The current unique identifier received from the provided JWT
-     * @returns {Promise<userAccountController|null>} Returns the current userAccount if found, or null otherwise
+     * @returns {Promise<boolean>} Returns true if the current userAccount was set, false otherwise
      */
-    async getCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier = null) {
+    async setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier = null) {
         const currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
 
         if (currentGlobalIdentifier === null) {
             this.populateError("Invalid globalIdentifier uniqueIdentifier provided", true, true);
-            return null;
+            return false;
         }
-        const currentUserAccount = new userAccountController(this.dxInstance);
 
-        if (!(await currentUserAccount.load(currentGlobalIdentifier.linkedEntityId))) {
-            this.populateError(currentUserAccount.getError(), true, true);
-            return null;
+        this.currentUserAccount = new userAccountController(this.dxInstance);
+
+        if (!(await this.currentUserAccount.load(currentGlobalIdentifier.linkedEntityId))) {
+            this.populateError(this.currentUserAccount.getError(), true, true);
+            return false;
         }
-        console.dir(currentUserAccount.data);
-        return currentUserAccount;
+        return true;
     }
 }
 
