@@ -267,6 +267,19 @@ class DxUserManagement extends divbloxPackageControllerBase {
     }
 
     /**
+     * Returns current user's userAccount details. Omits sensitive/database-related data.
+     * @return {Promise<userAccountController>} Modified userAccount object (omitting database-specific fields as well as the password)
+     */
+    async getCurrentUserAccount() {
+        delete this.currentUserAccount.data.password;
+        delete this.currentUserAccount.data.id;
+        delete this.currentUserAccount.data.lastUpdated;
+        delete this.currentUserAccount.data.oneTimeTokenUserAccount;
+
+        return this.currentUserAccount.data;
+    }
+
+    /**
      * Updates the current userAccount with the data provided
      * @param {*} userAccountDetails Should match the userAccount schema
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
@@ -277,32 +290,6 @@ class DxUserManagement extends divbloxPackageControllerBase {
             return false;
         }
         return await this.updateUserAccount(this.currentUserAccount.data.id, userAccountDetails);
-    }
-    /**
-     * Handles an uploaded profile picure
-     * @param {express-fileupload} uploadedFile An instance of an uploaded file
-     * @returns {Promise<string|null>} The static path of the uploaded file or null if an error occurred
-     */
-    async uploadProfilePicture(uploadedFile) {
-        if (this.currentUserAccount === null) {
-            this.populateError("Invalid permissions", true, true);
-            return false;
-        }
-
-        const uploadPath = this.dxInstance.getFileUploadPath() + "/" + uploadedFile.name;
-
-        try {
-            await uploadedFile.mv(uploadPath);
-
-            const finalFilePath = await this.dxInstance.processUploadedFile(uploadedFile.name);
-
-            await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
-
-            return finalFilePath;
-        } catch (error) {
-            this.populateError("File upload error: " + error, true, true);
-            return null;
-        }
     }
 
     /**
