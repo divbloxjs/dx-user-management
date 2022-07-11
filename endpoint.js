@@ -47,6 +47,28 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             disableSwaggerDoc: hiddenOperations.indexOf("listUserAccounts") !== -1,
         });
 
+        const getCurrentUserAccountResponseSchema = this.dxInstance.getEntitySchema("userAccount", true);
+
+        delete getCurrentUserAccountResponseSchema.properties.password;
+        delete getCurrentUserAccountResponseSchema.properties.lastUpdated;
+        delete getCurrentUserAccountResponseSchema.properties.oneTimeToken_userAccount;
+
+        const getCurrentUserAccount = this.getOperationDefinition({
+            operationName: "getCurrentUserAccount",
+            allowedAccess:
+                typeof operationAccess["getCurrentUserAccount"] !== "undefined"
+                    ? operationAccess["getCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Lists the data in the current user account",
+            operationDescription:
+                "This operation requires JWT authentication using Authorization: Bearer xxxx<br>This should be sent as part of the header of the request <br><br>Lists the data in the current user account",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {}, // this.getSchema()
+            responseSchema: getCurrentUserAccountResponseSchema,
+            disableSwaggerDoc: hiddenOperations.indexOf("getCurrentUserAccount") !== -1,
+        });
+
         const updateUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
             allowedAccess:
@@ -228,6 +250,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             listUserAccounts,
             createUserAccount,
             updateUserAccount,
+            getCurrentUserAccount,
             updateCurrentUserAccount,
             uploadProfilePicture,
             deleteUserAccount,
@@ -282,6 +305,9 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                         await this.deleteUserAccount(request.query["id"]);
                         break;
                 }
+                break;
+            case "getCurrentUserAccount":
+                await this.getCurrentUserAccount(this.currentGlobalIdentifier);
                 break;
             case "updateCurrentUserAccount":
                 await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
@@ -346,6 +372,28 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         } else {
             this.setResult(true, "Details updated!");
         }
+    }
+
+    /**
+     * Gets the information of the current userAccount. Omits sensitive/database-related data
+     * @param {*} uniqueIdentifier - globalIdentifier's uniqueIdentifier to reference the current userAccount
+     */
+    async getCurrentUserAccount(uniqueIdentifier) {
+        if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+            return;
+        }
+
+        const currentUserAccount = await this.controller.getCurrentUserAccount();
+        if (currentUserAccount === null) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.setResult(false, error);
+            return;
+        }
+
+        this.addResultDetail({ currentUserAccount: currentUserAccount });
+        this.setResult(true);
     }
 
     async updateCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
@@ -458,6 +506,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
             const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
             this.setResult(false, error);
+            return;
         }
 
         if (!(await this.controller.verifyAccountFromToken(token))) {

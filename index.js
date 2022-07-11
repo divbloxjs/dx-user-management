@@ -267,6 +267,24 @@ class DxUserManagement extends divbloxPackageControllerBase {
     }
 
     /**
+     * Returns current user's userAccount details. Omits sensitive/database-related data.
+     * @return {Promise<userAccountController|null>} Modified userAccount object (omitting database-specific fields as well as the password)
+     */
+    async getCurrentUserAccount() {
+        if (this.currentUserAccount === null) {
+            this.populateError("Invalid permissions", true, true);
+            return null;
+        }
+
+        delete this.currentUserAccount.data.password;
+        delete this.currentUserAccount.data.id;
+        delete this.currentUserAccount.data.lastUpdated;
+        delete this.currentUserAccount.data.oneTimeTokenUserAccount;
+
+        return this.currentUserAccount.data;
+    }
+
+    /**
      * Updates the current userAccount with the data provided
      * @param {*} userAccountDetails Should match the userAccount schema
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
@@ -841,7 +859,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
         const currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
 
         if (currentGlobalIdentifier === null) {
-            this.populateError("Invalid globalIdentifier uniqueIdentifier provided", true, true);
+            this.populateError("Not authorized", true, true);
             return false;
         }
 
