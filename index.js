@@ -38,7 +38,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
         }
 
         if (typeof this.packageOptions["frontEndResetPasswordPath"] === "undefined") {
-            this.packageOptions["frontEndResetPasswordPath"] = "/reset-password";
+            this.packageOptions["frontEndResetPasswordPath"] = "/reset-password?token=[token]";
         }
 
         this.resetPasswordPath =
@@ -55,7 +55,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
         }
 
         if (typeof this.packageOptions["frontEndVerifyAccountPath"] === "undefined") {
-            this.packageOptions["frontEndVerifyAccountPath"] = "/verify-account";
+            this.packageOptions["frontEndVerifyAccountPath"] = "/verify-account?token=[token]";
         }
 
         this.verifyAccountPath =
@@ -503,10 +503,9 @@ class DxUserManagement extends divbloxPackageControllerBase {
 
         let emailMessage = this.forgottenPasswordMessageTemplate.replace("[firstName]", "user");
 
-        emailMessage = emailMessage.replace(
-            "[resetPasswordLink]",
-            this.resetPasswordPath + "?token=" + oneTimeTokenStr
-        );
+        const finalResetPasswordPath = this.resetPasswordPath.replace("[token]", oneTimeTokenStr);
+
+        emailMessage = emailMessage.replace("[resetPasswordLink]", finalResetPasswordPath);
 
         if (
             !(await this.dxInstance.sendEmail({
@@ -546,10 +545,9 @@ class DxUserManagement extends divbloxPackageControllerBase {
 
         let emailMessage = this.verifyAccountMessageTemplate.replace("[firstName]", "user");
 
-        emailMessage = emailMessage.replace(
-            "[verifyAccountLink]",
-            this.verifyAccountPath + "?token=" + oneTimeTokenStr
-        );
+        const finalVerifyAccountPath = this.verifyAccountPath.replace("[token]", oneTimeTokenStr);
+
+        emailMessage = emailMessage.replace("[verifyAccountLink]", finalVerifyAccountPath);
 
         if (
             !(await this.dxInstance.sendEmail({
