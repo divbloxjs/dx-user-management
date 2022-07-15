@@ -313,6 +313,10 @@ class DxUserManagement extends divbloxPackageControllerBase {
             await uploadedFile.mv(uploadPath);
 
             const finalFilePath = await this.dxInstance.processUploadedFile(uploadedFile.name);
+            if (finalFilePath === null) {
+                this.populateError(this.dxInstance.getError(), true, true);
+                return null;
+            }
 
             await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
 
