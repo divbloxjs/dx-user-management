@@ -67,7 +67,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
             'Use <a href="[verifyAccountLink]">this link</a> to verify your email address';
 
         if (typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined") {
-            this.forgottenPasswordMessageTemplate = fs.readFileSync(
+            this.verifyAccountMessageTemplate = fs.readFileSync(
                 this.packageOptions["verifyAccountMessageTemplatePath"],
                 "utf-8"
             );
