@@ -88,7 +88,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const updateCurrentUserAccount = this.getOperationDefinition({
             operationName: "updateCurrentUserAccount",
-            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["updateCurrentUserAccount"] !== "undefined"
+                    ? operationAccess["updateCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Modifies the current user account",
             operationDescription:
                 "Modifies the current user account with the details provided.<br>" +
@@ -102,7 +105,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const uploadProfilePicture = this.getOperationDefinition({
             operationName: "uploadProfilePicture",
-            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["uploadProfilePicture"] !== "undefined"
+                    ? operationAccess["uploadProfilePicture"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Saves the uploaded picture as the current user's profile picture",
             operationDescription: "Saves the uploaded picture as the current user's profile picture",
             parameters: [], // An array of this.getInputParameter()
@@ -184,7 +190,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const logoutUserAccount = this.getOperationDefinition({
             operationName: "logout",
-            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["logoutUserAccount"] !== "undefined"
+                    ? operationAccess["logoutUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Logs out a user account",
             operationDescription: "Logs out a user account by removing the jwt http-only cookie from the browser",
             parameters: [], // An array of this.getInputParameter()
@@ -236,7 +245,10 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         const verifyAccountFromToken = this.getOperationDefinition({
             operationName: "verifyAccountFromToken",
-            allowedAccess: ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            allowedAccess:
+                typeof operationAccess["verifyAccountFromToken"] !== "undefined"
+                    ? operationAccess["verifyAccountFromToken"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Verifies an userAccount using the provided token",
             operationDescription: "Verifies an userAccount using the provided token",
             parameters: [this.getInputParameter({ name: "token", type: "query" })], // An array of this.getInputParameter()
