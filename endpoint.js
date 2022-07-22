@@ -277,6 +277,19 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
     }
 
     /**
+     * Sets the current result with a message
+     * @param {boolean} isSuccess
+     * @param {string} message A message to return
+     */
+    setResult(isSuccess = false, message) {
+        super.setResult(isSuccess, message);
+        if (!isSuccess && message === undefined) {
+            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
+            this.result["message"] = error;
+        }
+    }
+
+    /**
      * Specialization of the base executeOperation function (See parent class) to allow for all our specified operations
      * to execute
      * @param operation
@@ -365,8 +378,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         const createId = await this.controller.createUserAccount(userAccountDetail);
         this.addResultDetail({ id: createId });
         if (createId === -1) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true);
         }
@@ -379,8 +391,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
 
         if (!(await this.controller.updateUserAccount(userAccountId, userAccountDetail))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Details updated!");
         }
@@ -392,15 +403,13 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
      */
     async getCurrentUserAccount(uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
         const currentUserAccount = await this.controller.getCurrentUserAccount();
         if (currentUserAccount === null) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
@@ -410,14 +419,12 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async updateCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
         if (!(await this.controller.updateCurrentUserAccount(userAccountDetail))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Details updated!");
         }
@@ -430,15 +437,13 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
 
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
         const fileStaticUrl = await this.controller.uploadProfilePicture(Object.values(request.files)[0]);
         if (fileStaticUrl === null) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
@@ -448,8 +453,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async deleteUserAccount(userAccountId) {
         if (!(await this.controller.deleteUserAccount(userAccountId))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Successfully deleted");
         }
@@ -459,8 +463,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         const jwt = await this.controller.authenticateUser(loginDetails["loginName"], loginDetails["password"]);
         this.addResultDetail({ jwt: jwt });
         if (jwt === null) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setCookie("jwt", jwt);
             this.setResult(true);
@@ -475,8 +478,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
     async registerUserAccount(userAccountDetail) {
         const createId = await this.controller.registerUserAccount(userAccountDetail);
         if (createId === -1) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, " User Account created!");
         }
@@ -484,8 +486,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async sendPasswordResetToken(emailAddress) {
         if (!(await this.controller.sendPasswordResetToken(emailAddress))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Token sent to user(s)");
         }
@@ -498,8 +499,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
 
         if (!(await this.controller.resetPasswordFromToken(token, requestBody["password"]))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Password reset successfully");
         }
@@ -507,8 +507,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async sendAccountVerificationToken(emailAddress) {
         if (!(await this.controller.sendAccountVerificationToken(emailAddress))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Token sent to user(s)");
         }
@@ -516,14 +515,12 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
     async verifyAccountFromToken(token, uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
             return;
         }
 
         if (!(await this.controller.verifyAccountFromToken(token))) {
-            const error = this.controller.getError().length > 0 ? this.controller.getError()[0] : "Unknown error";
-            this.setResult(false, error);
+            this.setResult(false);
         } else {
             this.setResult(true, "Account verified successfully");
         }
