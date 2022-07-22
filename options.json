@@ -1,0 +1,16 @@
+{
+    "frontEndUrlBase": null,
+    "frontEndResetPasswordPath": null,
+    "frontEndVerifyAccountPath": null,
+    "forceLoginNameToEmailAddress": false,
+    "forgottenPasswordMessageTemplatePath": null,
+    "verifyAccountMessageTemplatePath": null,
+    "operationAccess": {
+        "getCurrentUserAccount": ["user"],
+        "updateCurrentUserAccount": ["user"],
+        "uploadProfilePicture": ["user"],
+        "verifyAccountFromToken": ["user"]
+    },
+    "hiddenOperations": [],
+    "noReplyEmailAddress": null
+}
