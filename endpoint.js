@@ -18,12 +18,14 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         this.controller = new dxUserManagementController(dxInstance);
 
         const hiddenOperations =
-            typeof this.controller.packageOptions["hiddenOperations"] !== "undefined"
+            typeof this.controller.packageOptions["hiddenOperations"] !== "undefined" &&
+            this.controller.packageOptions["hiddenOperations"] !== null
                 ? this.controller.packageOptions["hiddenOperations"]
                 : [];
 
         const operationAccess =
-            typeof this.controller.packageOptions["operationAccess"] !== "undefined"
+            typeof this.controller.packageOptions["operationAccess"] !== "undefined" &&
+            this.controller.packageOptions["operationAccess"] !== null
                 ? this.controller.packageOptions["operationAccess"]
                 : {};
 

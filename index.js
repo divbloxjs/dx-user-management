@@ -25,19 +25,31 @@ class DxUserManagement extends divbloxPackageControllerBase {
     constructor(dxInstance = null, packageName = "dx-user-management") {
         super(dxInstance, packageName);
 
-        if (typeof this.packageOptions["hiddenOperations"] === "undefined") {
+        if (
+            typeof this.packageOptions["hiddenOperations"] === "undefined" ||
+            this.packageOptions["hiddenOperations"] === null
+        ) {
             this.packageOptions["hiddenOperations"] = [];
         }
 
-        if (typeof this.packageOptions["noReplyEmailAddress"] === "undefined") {
+        if (
+            typeof this.packageOptions["noReplyEmailAddress"] === "undefined" ||
+            this.packageOptions["noReplyEmailAddress"] === null
+        ) {
             this.packageOptions["noReplyEmailAddress"] = "to be defined";
         }
 
-        if (typeof this.packageOptions["frontEndUrlBase"] === "undefined") {
+        if (
+            typeof this.packageOptions["frontEndUrlBase"] === "undefined" ||
+            this.packageOptions["frontEndUrlBase"] === null
+        ) {
             this.packageOptions["frontEndUrlBase"] = "#";
         }
 
-        if (typeof this.packageOptions["frontEndResetPasswordPath"] === "undefined") {
+        if (
+            typeof this.packageOptions["frontEndResetPasswordPath"] === "undefined" ||
+            this.packageOptions["frontEndResetPasswordPath"] === null
+        ) {
             this.packageOptions["frontEndResetPasswordPath"] = "/reset-password?token=[token]";
         }
 
@@ -47,14 +59,20 @@ class DxUserManagement extends divbloxPackageControllerBase {
         this.forgottenPasswordMessageTemplate =
             "" + "Dear [firstName],<br><br>" + 'Use <a href="[resetPasswordLink]">this link</a> to reset your password';
 
-        if (typeof this.packageOptions["forgottenPasswordMessageTemplatePath"] !== "undefined") {
+        if (
+            typeof this.packageOptions["forgottenPasswordMessageTemplatePath"] !== "undefined" ||
+            this.packageOptions["forgottenPasswordMessageTemplatePath"] === null
+        ) {
             this.forgottenPasswordMessageTemplate = fs.readFileSync(
                 this.packageOptions["forgottenPasswordMessageTemplatePath"],
                 "utf-8"
             );
         }
 
-        if (typeof this.packageOptions["frontEndVerifyAccountPath"] === "undefined") {
+        if (
+            typeof this.packageOptions["frontEndVerifyAccountPath"] === "undefined" ||
+            this.packageOptions["frontEndVerifyAccountPath"] === null
+        ) {
             this.packageOptions["frontEndVerifyAccountPath"] = "/verify-account?token=[token]";
         }
 
@@ -66,14 +84,20 @@ class DxUserManagement extends divbloxPackageControllerBase {
             "Dear [firstName],<br><br>" +
             'Use <a href="[verifyAccountLink]">this link</a> to verify your email address';
 
-        if (typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined") {
+        if (
+            typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined" ||
+            this.packageOptions["verifyAccountMessageTemplatePath"] === null
+        ) {
             this.verifyAccountMessageTemplate = fs.readFileSync(
                 this.packageOptions["verifyAccountMessageTemplatePath"],
                 "utf-8"
             );
         }
 
-        if (typeof this.packageOptions["forceLoginNameToEmailAddress"] === "undefined") {
+        if (
+            typeof this.packageOptions["forceLoginNameToEmailAddress"] === "undefined" ||
+            this.packageOptions["forceLoginNameToEmailAddress"] === null
+        ) {
             this.packageOptions["forceLoginNameToEmailAddress"] = false;
         }
 
