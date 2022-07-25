@@ -105,6 +105,21 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             disableSwaggerDoc: hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
         });
 
+        const deleteCurrentUserAccount = this.getOperationDefinition({
+            operationName: "deleteCurrentUserAccount",
+            allowedAccess:
+                typeof operationAccess["deleteCurrentUserAccount"] !== "undefined"
+                    ? operationAccess["deleteCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Deletes the current user account",
+            operationDescription: "Deletes the current user account with the details provided.<br>",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "DELETE", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {}, // this.getSchema()
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: hiddenOperations.indexOf("deleteCurrentUserAccount") !== -1,
+        });
+
         const uploadProfilePicture = this.getOperationDefinition({
             operationName: "uploadProfilePicture",
             allowedAccess:
@@ -266,6 +281,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             updateUserAccount,
             getCurrentUserAccount,
             updateCurrentUserAccount,
+            deleteCurrentUserAccount,
             uploadProfilePicture,
             deleteUserAccount,
             authenticateUserAccount,
@@ -337,7 +353,8 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 await this.getCurrentUserAccount(this.currentGlobalIdentifier);
                 break;
             case "updateCurrentUserAccount":
-                await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
+            case "deleteCurrentUserAccount":
+                await this.deleteCurrentUserAccount(request.body, this.currentGlobalIdentifier);
                 break;
             case "uploadProfilePicture":
                 await this.uploadProfilePicture(request, this.currentGlobalIdentifier);
@@ -426,6 +443,19 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
 
         if (!(await this.controller.updateCurrentUserAccount(userAccountDetail))) {
+            this.setResult(false);
+        } else {
+            this.setResult(true, "Details updated!");
+        }
+    }
+
+    async deleteCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
+        if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.setResult(false);
+            return;
+        }
+
+        if (!(await this.controller.deleteCurrentUserAccount(userAccountDetail))) {
             this.setResult(false);
         } else {
             this.setResult(true, "Details updated!");
