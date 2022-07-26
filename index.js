@@ -31,7 +31,6 @@ class DxUserManagement extends divbloxPackageControllerBase {
         ) {
             this.packageOptions["hiddenOperations"] = [];
         }
-
         if (
             typeof this.packageOptions["noReplyEmailAddress"] === "undefined" ||
             this.packageOptions["noReplyEmailAddress"] === null
@@ -52,7 +51,6 @@ class DxUserManagement extends divbloxPackageControllerBase {
         ) {
             this.packageOptions["frontEndResetPasswordPath"] = "/reset-password?token=[token]";
         }
-
         this.resetPasswordPath =
             this.packageOptions["frontEndUrlBase"] + this.packageOptions["frontEndResetPasswordPath"];
 
@@ -320,6 +318,20 @@ class DxUserManagement extends divbloxPackageControllerBase {
         }
         return await this.updateUserAccount(this.currentUserAccount.data.id, userAccountDetails);
     }
+
+    /**
+     * Deletes the current userAccount
+     * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
+     */
+    async deleteCurrentUserAccount() {
+        if (this.currentUserAccount === null) {
+            this.populateError("Invalid permissions", true, true);
+            return false;
+        }
+
+        return await this.deleteUserAccount(this.currentUserAccount.data.id);
+    }
+
     /**
      * Handles an uploaded profile picure
      * @param {express-fileupload} uploadedFile An instance of an uploaded file
