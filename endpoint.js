@@ -353,6 +353,8 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 await this.getCurrentUserAccount(this.currentGlobalIdentifier);
                 break;
             case "updateCurrentUserAccount":
+                await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
+                break;
             case "deleteCurrentUserAccount":
                 await this.deleteCurrentUserAccount(this.currentGlobalIdentifier);
                 break;
