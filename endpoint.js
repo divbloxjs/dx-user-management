@@ -8,8 +8,9 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
     /**
      * Standard DivbloxEndpointBase constructor
      * @param dxInstance
+     * @param {object|null} packageController If an object is provided, then we will set our controller to the provided object.
      */
-    constructor(dxInstance = null) {
+    constructor(dxInstance = null, packageController = null) {
         super(dxInstance);
 
         this.endpointName = "dxUserManagement"; // Change this to set the actual url endpoint
@@ -17,6 +18,14 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
 
         this.controller = new dxUserManagementController(dxInstance);
 
+        if (packageController !== null) {
+            this.controller = packageController;
+        }
+
+        this.handleOperationDeclarations();
+    }
+
+    handleOperationDeclarations() {
         const hiddenOperations =
             typeof this.controller.packageOptions["hiddenOperations"] !== "undefined" &&
             this.controller.packageOptions["hiddenOperations"] !== null
