@@ -112,7 +112,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                     ? operationAccess["deleteCurrentUserAccount"]
                     : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Deletes the current user account",
-            operationDescription: "Deletes the current user account with the details provided.<br>",
+            operationDescription: "Deletes the current user account.<br>",
             parameters: [], // An array of this.getInputParameter()
             requestType: "DELETE", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {}, // this.getSchema()
@@ -354,7 +354,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 break;
             case "updateCurrentUserAccount":
             case "deleteCurrentUserAccount":
-                await this.deleteCurrentUserAccount(request.body, this.currentGlobalIdentifier);
+                await this.deleteCurrentUserAccount(this.currentGlobalIdentifier);
                 break;
             case "uploadProfilePicture":
                 await this.uploadProfilePicture(request, this.currentGlobalIdentifier);
@@ -449,16 +449,16 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         }
     }
 
-    async deleteCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
+    async deleteCurrentUserAccount(uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
             this.setResult(false);
             return;
         }
 
-        if (!(await this.controller.deleteCurrentUserAccount(userAccountDetail))) {
+        if (!(await this.controller.deleteCurrentUserAccount())) {
             this.setResult(false);
         } else {
-            this.setResult(true, "Details updated!");
+            this.setResult(true, "Deleted successfully");
         }
     }
 
