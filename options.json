@@ -8,6 +8,7 @@
     "operationAccess": {
         "getCurrentUserAccount": ["user"],
         "updateCurrentUserAccount": ["user"],
+        "deleteCurrentUserAccount": ["user"],
         "uploadProfilePicture": ["user"],
         "verifyAccountFromToken": ["user"]
     },
