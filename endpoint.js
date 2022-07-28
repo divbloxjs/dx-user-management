@@ -65,7 +65,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         delete getCurrentUserAccountResponseSchema.properties.oneTimeToken_userAccount;
 
         const getCurrentUserAccount = this.getOperationDefinition({
-            operationName: "getCurrentUserAccount",
+            operationName: "currentUserAccount",
             allowedAccess:
                 typeof operationAccess["getCurrentUserAccount"] !== "undefined"
                     ? operationAccess["getCurrentUserAccount"]
@@ -98,7 +98,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         });
 
         const updateCurrentUserAccount = this.getOperationDefinition({
-            operationName: "updateCurrentUserAccount",
+            operationName: "currentUserAccount",
             allowedAccess:
                 typeof operationAccess["updateCurrentUserAccount"] !== "undefined"
                     ? operationAccess["updateCurrentUserAccount"]
@@ -115,7 +115,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         });
 
         const deleteCurrentUserAccount = this.getOperationDefinition({
-            operationName: "deleteCurrentUserAccount",
+            operationName: "currentUserAccount",
             allowedAccess:
                 typeof operationAccess["deleteCurrentUserAccount"] !== "undefined"
                     ? operationAccess["deleteCurrentUserAccount"]
@@ -358,14 +358,18 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                         break;
                 }
                 break;
-            case "getCurrentUserAccount":
-                await this.getCurrentUserAccount(this.currentGlobalIdentifier);
-                break;
-            case "updateCurrentUserAccount":
-                await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
-                break;
-            case "deleteCurrentUserAccount":
-                await this.deleteCurrentUserAccount(this.currentGlobalIdentifier);
+            case "currentUserAccount":
+                switch (request.method.toLowerCase()) {
+                    case "get":
+                        await this.getCurrentUserAccount(this.currentGlobalIdentifier);
+                        break;
+                    case "put":
+                        await this.updateCurrentUserAccount(request.body, this.currentGlobalIdentifier);
+                        break;
+                    case "delete":
+                        await this.deleteCurrentUserAccount(this.currentGlobalIdentifier);
+                        break;
+                }
                 break;
             case "uploadProfilePicture":
                 await this.uploadProfilePicture(request, this.currentGlobalIdentifier);
