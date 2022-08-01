@@ -22,27 +22,33 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             this.controller = packageController;
         }
 
-        this.handleOperationDeclarations();
-    }
-
-    handleOperationDeclarations() {
-        const hiddenOperations =
-            typeof this.controller.packageOptions["hiddenOperations"] !== "undefined" &&
-            this.controller.packageOptions["hiddenOperations"] !== null
-                ? this.controller.packageOptions["hiddenOperations"]
+        this.hiddenOperations =
+            typeof this.controller.packageOptions["this.hiddenOperations"] !== "undefined" &&
+            this.controller.packageOptions["this.hiddenOperations"] !== null
+                ? this.controller.packageOptions["this.hiddenOperations"]
                 : [];
 
-        const operationAccess =
-            typeof this.controller.packageOptions["operationAccess"] !== "undefined" &&
-            this.controller.packageOptions["operationAccess"] !== null
-                ? this.controller.packageOptions["operationAccess"]
+        this.operationAccess =
+            typeof this.controller.packageOptions["this.operationAccess"] !== "undefined" &&
+            this.controller.packageOptions["this.operationAccess"] !== null
+                ? this.controller.packageOptions["this.operationAccess"]
                 : {};
 
+        const operations = this.handleOperationDeclarations();
+
+        this.declareOperations(operations)
+    }
+
+    /**
+     * Builds and returns an array of defined operations
+     * @returns {[]} - Array of defined operations
+     */
+    handleOperationDeclarations() {
         const listUserAccounts = this.getOperationDefinition({
             operationName: "listUserAccounts",
             allowedAccess:
-                typeof operationAccess["listUserAccounts"] !== "undefined"
-                    ? operationAccess["listUserAccounts"]
+                typeof this.operationAccess["listUserAccounts"] !== "undefined"
+                    ? this.operationAccess["listUserAccounts"]
                     : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Lists the current user accounts in the database",
             operationDescription: "Lists the current user accounts in the database",
@@ -55,7 +61,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {}, // this.getSchema()
             responseSchema: this.getArraySchema(this.dxInstance.getEntitySchema("userAccount"), "userAccounts"),
-            disableSwaggerDoc: hiddenOperations.indexOf("listUserAccounts") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("listUserAccounts") !== -1,
         });
 
         const getCurrentUserAccountResponseSchema = this.dxInstance.getEntitySchema("userAccount", true);
@@ -64,91 +70,11 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         delete getCurrentUserAccountResponseSchema.properties.lastUpdated;
         delete getCurrentUserAccountResponseSchema.properties.oneTimeToken_userAccount;
 
-        const getCurrentUserAccount = this.getOperationDefinition({
-            operationName: "currentUserAccount",
-            allowedAccess:
-                typeof operationAccess["getCurrentUserAccount"] !== "undefined"
-                    ? operationAccess["getCurrentUserAccount"]
-                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
-            operationSummary: "Lists the data in the current user account",
-            operationDescription:
-                "This operation requires JWT authentication using Authorization: Bearer xxxx<br>This should be sent as part of the header of the request <br><br>Lists the data in the current user account",
-            parameters: [], // An array of this.getInputParameter()
-            requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
-            requestSchema: {}, // this.getSchema()
-            responseSchema: getCurrentUserAccountResponseSchema,
-            disableSwaggerDoc: hiddenOperations.indexOf("getCurrentUserAccount") !== -1,
-        });
-
-        const updateUserAccount = this.getOperationDefinition({
-            operationName: "userAccount",
-            allowedAccess:
-                typeof operationAccess["updateUserAccount"] !== "undefined"
-                    ? operationAccess["updateUserAccount"]
-                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
-            operationSummary: "Modifies a user account",
-            operationDescription:
-                "Modifies a user account with the details provided.<br>" +
-                "If a password is supplied, this will be properly hashed and salted for later comparison.",
-            parameters: [this.getInputParameter({ name: "id", type: "query" })], // An array of this.getInputParameter()
-            requestType: "PUT", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
-            requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
-            responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("updateUserAccount") !== -1,
-        });
-
-        const updateCurrentUserAccount = this.getOperationDefinition({
-            operationName: "currentUserAccount",
-            allowedAccess:
-                typeof operationAccess["updateCurrentUserAccount"] !== "undefined"
-                    ? operationAccess["updateCurrentUserAccount"]
-                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
-            operationSummary: "Modifies the current user account",
-            operationDescription:
-                "Modifies the current user account with the details provided.<br>" +
-                "If a password is supplied, this will be properly hashed and salted for later comparison.",
-            parameters: [], // An array of this.getInputParameter()
-            requestType: "PUT", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
-            requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
-            responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
-        });
-
-        const deleteCurrentUserAccount = this.getOperationDefinition({
-            operationName: "currentUserAccount",
-            allowedAccess:
-                typeof operationAccess["deleteCurrentUserAccount"] !== "undefined"
-                    ? operationAccess["deleteCurrentUserAccount"]
-                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
-            operationSummary: "Deletes the current user account",
-            operationDescription: "Deletes the current user account.<br>",
-            parameters: [], // An array of this.getInputParameter()
-            requestType: "DELETE", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
-            requestSchema: {}, // this.getSchema()
-            responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("deleteCurrentUserAccount") !== -1,
-        });
-
-        const uploadProfilePicture = this.getOperationDefinition({
-            operationName: "uploadProfilePicture",
-            allowedAccess:
-                typeof operationAccess["uploadProfilePicture"] !== "undefined"
-                    ? operationAccess["uploadProfilePicture"]
-                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
-            operationSummary: "Saves the uploaded picture as the current user's profile picture",
-            operationDescription: "Saves the uploaded picture as the current user's profile picture",
-            parameters: [], // An array of this.getInputParameter()
-            requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
-            requestSchema: {},
-            responseSchema: this.getSchema({ fileUrl: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
-        });
-
         const createUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
             allowedAccess:
-                typeof operationAccess["createUserAccount"] !== "undefined"
-                    ? operationAccess["createUserAccount"]
+                typeof this.operationAccess["createUserAccount"] !== "undefined"
+                    ? this.operationAccess["createUserAccount"]
                     : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Creates a new user account",
             operationDescription:
@@ -160,14 +86,31 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
             responseSchema: this.getSchema({ id: "integer" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("createUserAccount") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("createUserAccount") !== -1,
+        });
+
+        const updateUserAccount = this.getOperationDefinition({
+            operationName: "userAccount",
+            allowedAccess:
+                typeof this.operationAccess["updateUserAccount"] !== "undefined"
+                    ? this.operationAccess["updateUserAccount"]
+                    : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Modifies a user account",
+            operationDescription:
+                "Modifies a user account with the details provided.<br>" +
+                "If a password is supplied, this will be properly hashed and salted for later comparison.",
+            parameters: [this.getInputParameter({ name: "id", type: "query" })], // An array of this.getInputParameter()
+            requestType: "PUT", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: this.hiddenOperations.indexOf("updateUserAccount") !== -1,
         });
 
         const deleteUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
             allowedAccess:
-                typeof operationAccess["deleteUserAccount"] !== "undefined"
-                    ? operationAccess["deleteUserAccount"]
+                typeof this.operationAccess["deleteUserAccount"] !== "undefined"
+                    ? this.operationAccess["deleteUserAccount"]
                     : ["super user"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Deletes a user account",
             operationDescription: "Deletes a user account matching the provided id",
@@ -175,7 +118,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "DELETE", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {}, // this.getSchema()
             responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("deleteUserAccount") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("deleteUserAccount") !== -1,
         });
 
         const registerUserAccount = this.getOperationDefinition({
@@ -199,7 +142,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
                 password: "string",
             }),
             responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("registerUserAccount") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("registerUserAccount") !== -1,
         });
 
         const authenticateUserAccount = this.getOperationDefinition({
@@ -211,14 +154,14 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: this.getSchema({ loginName: "string", password: "string" }),
             responseSchema: this.getSchema({ jwt: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("authenticateUserAccount") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("authenticateUserAccount") !== -1,
         });
 
         const logoutUserAccount = this.getOperationDefinition({
             operationName: "logout",
             allowedAccess:
-                typeof operationAccess["logoutUserAccount"] !== "undefined"
-                    ? operationAccess["logoutUserAccount"]
+                typeof this.operationAccess["logoutUserAccount"] !== "undefined"
+                    ? this.operationAccess["logoutUserAccount"]
                     : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Logs out a user account",
             operationDescription: "Logs out a user account by removing the jwt http-only cookie from the browser",
@@ -226,7 +169,70 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {},
             responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("logoutUserAccount") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("logoutUserAccount") !== -1,
+        });
+
+        const getCurrentUserAccount = this.getOperationDefinition({
+            operationName: "currentUserAccount",
+            allowedAccess:
+                typeof this.operationAccess["getCurrentUserAccount"] !== "undefined"
+                    ? this.operationAccess["getCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Lists the data in the current user account",
+            operationDescription:
+                "This operation requires JWT authentication using Authorization: Bearer xxxx<br>This should be sent as part of the header of the request <br><br>Lists the data in the current user account",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {}, // this.getSchema()
+            responseSchema: getCurrentUserAccountResponseSchema,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("getCurrentUserAccount") !== -1,
+        });
+
+        const updateCurrentUserAccount = this.getOperationDefinition({
+            operationName: "currentUserAccount",
+            allowedAccess:
+                typeof this.operationAccess["updateCurrentUserAccount"] !== "undefined"
+                    ? this.operationAccess["updateCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Modifies the current user account",
+            operationDescription:
+                "Modifies the current user account with the details provided.<br>" +
+                "If a password is supplied, this will be properly hashed and salted for later comparison.",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "PUT", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: this.dxInstance.getEntitySchema("userAccount", true), // this.getSchema()
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: this.hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
+        });
+
+        const deleteCurrentUserAccount = this.getOperationDefinition({
+            operationName: "currentUserAccount",
+            allowedAccess:
+                typeof this.operationAccess["deleteCurrentUserAccount"] !== "undefined"
+                    ? this.operationAccess["deleteCurrentUserAccount"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Deletes the current user account",
+            operationDescription: "Deletes the current user account.<br>",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "DELETE", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {}, // this.getSchema()
+            responseSchema: this.getSchema({ message: "string" }),
+            disableSwaggerDoc: this.hiddenOperations.indexOf("deleteCurrentUserAccount") !== -1,
+        });
+
+        const uploadProfilePicture = this.getOperationDefinition({
+            operationName: "uploadProfilePicture",
+            allowedAccess:
+                typeof this.operationAccess["uploadProfilePicture"] !== "undefined"
+                    ? this.operationAccess["uploadProfilePicture"]
+                    : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
+            operationSummary: "Saves the uploaded picture as the current user's profile picture",
+            operationDescription: "Saves the uploaded picture as the current user's profile picture",
+            parameters: [], // An array of this.getInputParameter()
+            requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
+            requestSchema: {},
+            responseSchema: this.getSchema({ fileUrl: "string" }),
+            disableSwaggerDoc: this.hiddenOperations.indexOf("updateCurrentUserAccount") !== -1,
         });
 
         const sendPasswordResetToken = this.getOperationDefinition({
@@ -240,7 +246,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {},
             responseSchema: this.getSchema({ token: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("sendPasswordResetToken") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("sendPasswordResetToken") !== -1,
         });
 
         const resetPasswordFromToken = this.getOperationDefinition({
@@ -252,7 +258,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "POST", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: this.getSchema({ password: "string" }),
             responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("resetPasswordFromToken") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("resetPasswordFromToken") !== -1,
         });
 
         const sendAccountVerificationToken = this.getOperationDefinition({
@@ -266,14 +272,14 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {},
             responseSchema: this.getSchema({ token: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("sendAccountVerificationToken") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("sendAccountVerificationToken") !== -1,
         });
 
         const verifyAccountFromToken = this.getOperationDefinition({
             operationName: "verifyAccountFromToken",
             allowedAccess:
-                typeof operationAccess["verifyAccountFromToken"] !== "undefined"
-                    ? operationAccess["verifyAccountFromToken"]
+                typeof this.operationAccess["verifyAccountFromToken"] !== "undefined"
+                    ? this.operationAccess["verifyAccountFromToken"]
                     : ["anonymous"], // If this array does not contain "anonymous", a JWT token will be expected in the Auth header
             operationSummary: "Verifies an userAccount using the provided token",
             operationDescription: "Verifies an userAccount using the provided token",
@@ -281,26 +287,26 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
             requestType: "GET", // GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE
             requestSchema: {},
             responseSchema: this.getSchema({ message: "string" }),
-            disableSwaggerDoc: hiddenOperations.indexOf("verifyAccountFromToken") !== -1,
+            disableSwaggerDoc: this.hiddenOperations.indexOf("verifyAccountFromToken") !== -1,
         });
 
-        this.declareOperations([
+        return [
             listUserAccounts,
             createUserAccount,
             updateUserAccount,
+            deleteUserAccount,
             getCurrentUserAccount,
             updateCurrentUserAccount,
             deleteCurrentUserAccount,
             uploadProfilePicture,
-            deleteUserAccount,
+            registerUserAccount,
             authenticateUserAccount,
             logoutUserAccount,
-            registerUserAccount,
             sendPasswordResetToken,
             resetPasswordFromToken,
             sendAccountVerificationToken,
             verifyAccountFromToken,
-        ]);
+        ];
     }
 
     /**
