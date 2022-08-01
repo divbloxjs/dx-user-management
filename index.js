@@ -1,6 +1,7 @@
 const divbloxPackageControllerBase = require("divbloxjs/dx-core-modules/package-controller-base");
 const userAccountController = require("divbloxjs/dx-orm/generated/user-account");
 const oneTimeTokenController = require("divbloxjs/dx-orm/generated/one-time-token");
+const globalIdentifierController = require("divbloxjs/dx-orm/generated/global-identifier");
 const fs = require("fs");
 const dxUtils = require("dx-utilities");
 const bcrypt = require("bcrypt");
@@ -58,8 +59,8 @@ class DxUserManagement extends divbloxPackageControllerBase {
             "" + "Dear [firstName],<br><br>" + 'Use <a href="[resetPasswordLink]">this link</a> to reset your password';
 
         if (
-            typeof this.packageOptions["forgottenPasswordMessageTemplatePath"] !== "undefined" ||
-            this.packageOptions["forgottenPasswordMessageTemplatePath"] === null
+            typeof this.packageOptions["forgottenPasswordMessageTemplatePath"] !== "undefined" &&
+            this.packageOptions["forgottenPasswordMessageTemplatePath"] !== null
         ) {
             this.forgottenPasswordMessageTemplate = fs.readFileSync(
                 this.packageOptions["forgottenPasswordMessageTemplatePath"],
@@ -83,8 +84,8 @@ class DxUserManagement extends divbloxPackageControllerBase {
             'Use <a href="[verifyAccountLink]">this link</a> to verify your email address';
 
         if (
-            typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined" ||
-            this.packageOptions["verifyAccountMessageTemplatePath"] === null
+            typeof this.packageOptions["verifyAccountMessageTemplatePath"] !== "undefined" &&
+            this.packageOptions["verifyAccountMessageTemplatePath"] !== null
         ) {
             this.verifyAccountMessageTemplate = fs.readFileSync(
                 this.packageOptions["verifyAccountMessageTemplatePath"],
@@ -100,6 +101,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
         }
 
         this.currentUserAccount = null;
+        this.currentGlobalIdentifier = null;
     }
 
     /**
@@ -324,12 +326,35 @@ class DxUserManagement extends divbloxPackageControllerBase {
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
     async deleteCurrentUserAccount() {
-        if (this.currentUserAccount === null) {
+        if (this.currentUserAccount === null ||
+            this.currentGlobalIdentifier === null) {
             this.populateError("Invalid permissions", true, true);
             return false;
         }
 
+        await this.deleteGlobalIdentifier(this.currentGlobalIdentifier.id);
+
         return await this.deleteUserAccount(this.currentUserAccount.data.id);
+    }
+
+    /**
+     * Deletes the relevant globalIdentifier from the database
+     * @param globalIdentifierId - DB ID of the global identifier
+     * @return {Promise<boolean>} True if successfully deleted, false otherwise with an error populated in the error array
+     */
+    async deleteGlobalIdentifier(globalIdentifierId) {
+        const currentGlobalIdentifierController = new globalIdentifierController(this.dxInstance);
+        if (!(await currentGlobalIdentifierController.load(globalIdentifierId))) {
+            this.populateError("Could not locate global identifier", true, true);
+            return false;
+        }
+
+        if (!(await currentGlobalIdentifierController.delete())) {
+            this.populateError(currentGlobalIdentifierController.getError(), true, true);
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -354,7 +379,7 @@ class DxUserManagement extends divbloxPackageControllerBase {
                 return null;
             }
 
-            await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
+            await this.updateUserAccount(this.currentUserAccount.data.id, {profilePictureUrl: finalFilePath});
 
             return finalFilePath;
         } catch (error) {
@@ -894,16 +919,16 @@ class DxUserManagement extends divbloxPackageControllerBase {
      * @returns {Promise<boolean>} Returns true if the current userAccount was set, false otherwise
      */
     async setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier = null) {
-        const currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
+        this.currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
 
-        if (currentGlobalIdentifier === null) {
+        if (this.currentGlobalIdentifier === null) {
             this.populateError("Not authorized", true, true);
             return false;
         }
 
         this.currentUserAccount = new userAccountController(this.dxInstance);
 
-        if (!(await this.currentUserAccount.load(currentGlobalIdentifier.linkedEntityId))) {
+        if (!(await this.currentUserAccount.load(this.currentGlobalIdentifier.linkedEntityId))) {
             this.populateError(this.currentUserAccount.getError(), true, true);
             return false;
         }
