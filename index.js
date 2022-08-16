@@ -1,7 +1,7 @@
 const DivbloxPackageControllerBase = require("divbloxjs/dx-core-modules/package-controller-base");
-const UserAccountModel = require("divbloxjs/dx-orm/generated/user-account");
-const OneTimeTokenModel = require("divbloxjs/dx-orm/generated/one-time-token");
-const GlobalIdentifierModel = require("divbloxjs/dx-orm/generated/global-identifier");
+const UserAccount = require("divbloxjs/dx-orm/generated/user-account");
+const OneTimeToken = require("divbloxjs/dx-orm/generated/one-time-token");
+const GlobalIdentifier = require("divbloxjs/dx-orm/generated/global-identifier");
 const fs = require("fs");
 const dxUtils = require("dx-utilities");
 const bcrypt = require("bcrypt");
@@ -157,7 +157,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * an error, the error array is populated with a relevant message
      */
     async createUserAccount(userAccountDetails) {
-        const userAccount = new UserAccountModel(this.dxInstance);
+        const userAccount = new UserAccount(this.dxInstance);
         userAccount.data = userAccountDetails;
 
         if (typeof userAccount.data["emailAddress"] !== "undefined" && userAccount.data["emailAddress"] !== null) {
@@ -224,7 +224,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
     async updateUserAccount(userAccountId = -1, userAccountDetails) {
-        const userAccount = new UserAccountModel(this.dxInstance);
+        const userAccount = new UserAccount(this.dxInstance);
 
         if (!(await userAccount.load(userAccountId))) {
             this.populateError(userAccount.getError(), true, true);
@@ -292,7 +292,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
 
     /**
      * Returns current user's userAccount details. Omits sensitive/database-related data.
-     * @return {Promise<UserAccountModel.data|null>} Modified userAccount object (omitting database-specific fields as well as the password)
+     * @return {Promise<UserAccount.data|null>} Modified userAccount object (omitting database-specific fields as well as the password)
      */
     async getCurrentUserAccount() {
         if (this.currentUserAccount === null) {
@@ -343,7 +343,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<boolean>} True if successfully deleted, false otherwise with an error populated in the error array
      */
     async deleteGlobalIdentifier(globalIdentifierId) {
-        const currentGlobalIdentifier = new GlobalIdentifierModel(this.dxInstance);
+        const currentGlobalIdentifier = new GlobalIdentifier(this.dxInstance);
         if (!(await currentGlobalIdentifier.load(globalIdentifierId))) {
             this.populateError("Could not locate global identifier", true, true);
             return false;
@@ -394,7 +394,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<boolean>} True if successfully deleted, false otherwise with an error populated in the error array
      */
     async deleteUserAccount(userAccountId) {
-        const userAccount = new UserAccountModel(this.dxInstance);
+        const userAccount = new UserAccount(this.dxInstance);
 
         if (!(await userAccount.load(userAccountId))) {
             this.populateError("Could not locate user account", true, true);
@@ -425,7 +425,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             return jwtReturned;
         }
 
-        const existingUserAccount = new UserAccountModel(this.dxInstance);
+        const existingUserAccount = new UserAccount(this.dxInstance);
         if (!(await existingUserAccount.loadByField("loginName", loginName))) {
             this.populateError("Invalid credentials", true, true);
             return jwtReturned;
@@ -457,7 +457,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * an error, the error array is populated with a relevant message
      */
     async registerUserAccount(userAccountDetails) {
-        const userAccount = new UserAccountModel(this.dxInstance);
+        const userAccount = new UserAccount(this.dxInstance);
         userAccount.data = userAccountDetails;
 
         if (
@@ -494,7 +494,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             userAccount.data["loginName"] = userAccount.data["emailAddress"];
         }
 
-        const existingUserAccount = new UserAccountModel(this.dxInstance);
+        const existingUserAccount = new UserAccount(this.dxInstance);
         if (await existingUserAccount.loadByField("loginName", userAccount.data["loginName"])) {
             this.populateError("User already exists", true, true);
             return -1;
@@ -720,7 +720,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             userAccountIdStr += userAccount.id;
         }
 
-        const oneTimeToken = new OneTimeTokenModel(this.dxInstance);
+        const oneTimeToken = new OneTimeToken(this.dxInstance);
 
         oneTimeToken.data.token = dxUtils.generateRandomString(24);
         oneTimeToken.data.expiryTime = new Date();
@@ -884,7 +884,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
     /**
      * Verifies that the given token exists and has not expired yet and returns it.
      * @param {string} token The token to check for
-     * @returns {Promise<OneTimeTokenModel|null>} A valid OneTimeTokenModel or null, if the token is invalid
+     * @returns {Promise<OneTimeToken|null>} A valid OneTimeToken or null, if the token is invalid
      */
     async getVerifiedOneTimeToken(token) {
         if (typeof token === "undefined") {
@@ -892,7 +892,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             return null;
         }
 
-        const oneTimeToken = new OneTimeTokenModel(this.dxInstance);
+        const oneTimeToken = new OneTimeToken(this.dxInstance);
 
         if (!(await oneTimeToken.loadByField("token", token))) {
             this.populateError("Invalid token provided", true, true);
@@ -926,7 +926,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             return false;
         }
 
-        this.currentUserAccount = new UserAccountModel(this.dxInstance);
+        this.currentUserAccount = new UserAccount(this.dxInstance);
 
         if (!(await this.currentUserAccount.load(this.currentGlobalIdentifier.linkedEntityId))) {
             this.populateError(this.currentUserAccount.getError(), true, true);
