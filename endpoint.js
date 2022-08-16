@@ -1,10 +1,10 @@
-const dxUserManagementController = require("./index");
-const divbloxEndpointBase = require("divbloxjs/dx-core-modules/endpoint-base");
+const DxUserManagementController = require("./index");
+const DivbloxEndpointBase = require("divbloxjs/dx-core-modules/endpoint-base");
 
 /**
  * Provides all the relevant endpoints for the Divblox User Management package
  */
-class DxUserManagementEndpoint extends divbloxEndpointBase {
+class DxUserManagementEndpoint extends DivbloxEndpointBase {
     /**
      * Standard DivbloxEndpointBase constructor
      * @param dxInstance
@@ -16,7 +16,7 @@ class DxUserManagementEndpoint extends divbloxEndpointBase {
         this.endpointName = "dxUserManagement"; // Change this to set the actual url endpoint
         this.endpointDescription = "dxUserManagement endpoint"; // Change this to be more descriptive of the endpoint
 
-        this.controller = new dxUserManagementController(dxInstance);
+        this.controller = new DxUserManagementController(dxInstance);
 
         if (packageController !== null) {
             this.controller = packageController;
