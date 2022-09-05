@@ -22,7 +22,7 @@
     "homepage": "https://github.com/divbloxjs/dx-user-management#readme",
     "dependencies": {
         "bcrypt": "^5.0.1",
-        "divbloxjs": "^1.0.18",
+        "divbloxjs": "^1.0.30",
         "dx-utilities": "^1.0.0"
     }
 }
