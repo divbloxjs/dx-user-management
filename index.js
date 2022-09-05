@@ -325,31 +325,32 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * Deletes the current userAccount
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
-    async deleteCurrentUserAccount() {
+    async deleteCurrentUserAccount(transaction = null) {
         if (this.currentUserAccount === null ||
             this.currentGlobalIdentifier === null) {
             this.populateError("Invalid permissions", true, true);
             return false;
         }
 
-        await this.deleteGlobalIdentifier(this.currentGlobalIdentifier.id);
+        await this.deleteGlobalIdentifier(this.currentGlobalIdentifier.id, transaction);
 
-        return await this.deleteUserAccount(this.currentUserAccount.data.id);
+        return await this.deleteUserAccount(this.currentUserAccount.data.id, transaction);
     }
 
     /**
      * Deletes the relevant globalIdentifier from the database
      * @param globalIdentifierId - DB ID of the global identifier
+     * @param transaction
      * @return {Promise<boolean>} True if successfully deleted, false otherwise with an error populated in the error array
      */
-    async deleteGlobalIdentifier(globalIdentifierId) {
+    async deleteGlobalIdentifier(globalIdentifierId, transaction = null) {
         const currentGlobalIdentifier = new GlobalIdentifier(this.dxInstance);
-        if (!(await currentGlobalIdentifier.load(globalIdentifierId))) {
+        if (!(await currentGlobalIdentifier.load(globalIdentifierId, transaction))) {
             this.populateError("Could not locate global identifier", true, true);
             return false;
         }
 
-        if (!(await currentGlobalIdentifier.delete())) {
+        if (!(await currentGlobalIdentifier.delete(transaction))) {
             this.populateError(currentGlobalIdentifier.getError(), true, true);
             return false;
         }
@@ -391,18 +392,19 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
     /**
      * Deletes the relevant userAccount from the database
      * @param {number} userAccountId The id of the userAccount to remove
+     * @param transaction
      * @return {Promise<boolean>} True if successfully deleted, false otherwise with an error populated in the error array
      */
-    async deleteUserAccount(userAccountId) {
+    async deleteUserAccount(userAccountId, transaction = null) {
         const userAccount = new UserAccount(this.dxInstance);
 
-        if (!(await userAccount.load(userAccountId))) {
-            this.populateError("Could not locate user account", true, true);
+        if (!(await userAccount.load(userAccountId, transaction))) {
+            this.populateError("Error loading userAccount with ID: " + userAccountId);
             return false;
         }
 
-        if (!(await userAccount.delete())) {
-            this.populateError(userAccount.getError(), true, true);
+        if (!(await userAccount.delete(transaction))) {
+            this.populateError(userAccount.getLastError());
             return false;
         }
 
