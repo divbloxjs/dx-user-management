@@ -1,6 +1,6 @@
 {
     "name": "dx-user-management",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "description": "A divbloxjs package that facilitates functionality related to user account management and authentication",
     "main": "index.js",
     "scripts": {
