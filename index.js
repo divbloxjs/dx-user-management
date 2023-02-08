@@ -308,9 +308,15 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             return false;
         }
 
-        await this.deleteGlobalIdentifier(this.currentGlobalIdentifier.id, transaction);
+        let innerTransaction = transaction;
+        if (transaction === null) {
+            // Wrap this function connection in own rollback'able transaction only if NOT passed by parent
+            innerTransaction = await dbConnector.beginTransaction(UserAccount.__moduleName);
+        }
 
-        return await this.deleteUserAccount(this.currentUserAccount.data.id, transaction);
+        await this.deleteGlobalIdentifier(this.currentGlobalIdentifier.id, innerTransaction);
+
+        return await this.deleteUserAccount(this.currentUserAccount.data.id, innerTransaction);
     }
 
     /**
