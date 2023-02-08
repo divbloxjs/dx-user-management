@@ -5,6 +5,7 @@ const GlobalIdentifier = require("divbloxjs/dx-orm/generated/global-identifier")
 const fs = require("fs");
 const dxUtils = require("dx-utilities");
 const bcrypt = require("bcrypt");
+const dxQ = require("divbloxjs/dx-orm/query-model-base");
 const saltRounds = 10;
 
 /**
@@ -112,42 +113,18 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<*[]>} An array of userAccount objects
      */
     async listUserAccounts(offset = 0, limit = 50, constraints = {}) {
-        let constraintStr = "";
+        const userAccount = new UserAccount(this.dxInstance);
+
+        let whereClause;
         if (Object.keys(constraints).length > 0) {
-            constraintStr = " WHERE";
-            for (const constraint of Object.keys(constraints)) {
-                constraintStr +=
-                    " `" +
-                    this.dxInstance.dataLayer.getSqlReadyName(constraint) +
-                    "` = '" +
-                    constraints[constraint] +
-                    "' AND ";
+            for (const [constraintKey, constraintValue] of Object.entries(constraints)) {
+                whereClause = dxQ.andCondition(whereClause, dxQ.equal(constraintKey, constraintValue));
             }
-
-            constraintStr = constraintStr.substring(0, constraintStr.length - 4);
         }
 
-        const queryStr =
-            "SELECT * FROM `" +
-            this.dxInstance.dataLayer.getSqlReadyName("userAccount") +
-            "` " +
-            constraintStr +
-            "LIMIT " +
-            limit +
-            " OFFSET " +
-            offset;
+        const userAccountArray = await userAccount.findArray({}, whereClause, dxQ.limit(limit), dxQ.offset(offset));
 
-        const queryResult = await this.dxInstance.dataLayer.executeQuery(
-            queryStr,
-            this.dxInstance.dataLayer.getModuleNameFromEntityName("userAccount")
-        );
-
-        let returnArray = [];
-        for (const item of queryResult) {
-            returnArray.push(this.dxInstance.dataLayer.transformSqlObjectToJs(item));
-        }
-
-        return returnArray;
+        return userAccountArray;
     }
 
     /**
@@ -326,8 +303,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
     async deleteCurrentUserAccount(transaction = null) {
-        if (this.currentUserAccount === null ||
-            this.currentGlobalIdentifier === null) {
+        if (this.currentUserAccount === null || this.currentGlobalIdentifier === null) {
             this.populateError("Invalid permissions", true, true);
             return false;
         }
@@ -380,7 +356,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
                 return null;
             }
 
-            await this.updateUserAccount(this.currentUserAccount.data.id, {profilePictureUrl: finalFilePath});
+            await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
 
             return finalFilePath;
         } catch (error) {
