@@ -16,6 +16,9 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
         this.endpointName = "dxUserManagement"; // Change this to set the actual url endpoint
         this.endpointDescription = "dxUserManagement endpoint"; // Change this to be more descriptive of the endpoint
 
+        /**
+         * @type {DxUserManagementController}
+         */
         this.controller = new DxUserManagementController(dxInstance);
 
         if (packageController !== null) {
@@ -36,7 +39,7 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
         const operations = this.handleOperationDeclarations();
 
-        this.declareOperations(operations)
+        this.declareOperations(operations);
     }
 
     /**
@@ -410,6 +413,13 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
     async listUserAccounts(offset = 0, limit = 50, constraints = {}) {
         const userAccounts = await this.controller.listUserAccounts(offset, limit, constraints);
+
+        if (userAccounts === null) {
+            this.addResultDetail(this.controller.getLastError());
+            this.setResult(false);
+            return;
+        }
+
         this.addResultDetail({ userAccounts: userAccounts });
         this.setResult(true);
     }
@@ -418,10 +428,12 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
         const createId = await this.controller.createUserAccount(userAccountDetail);
         this.addResultDetail({ id: createId });
         if (createId === -1) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true);
+            return;
         }
+
+        this.setResult(true, "User created");
     }
 
     async updateUserAccount(userAccountId = -1, userAccountDetail) {
@@ -431,10 +443,12 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
         }
 
         if (!(await this.controller.updateUserAccount(userAccountId, userAccountDetail))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Details updated!");
+            return;
         }
+
+        this.setResult(true, "User updated!");
     }
 
     /**
@@ -443,12 +457,14 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
      */
     async getCurrentUserAccount(uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
 
         const currentUserAccount = await this.controller.getCurrentUserAccount();
         if (currentUserAccount === null) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
@@ -459,28 +475,34 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
     async updateCurrentUserAccount(userAccountDetail, uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
 
         if (!(await this.controller.updateCurrentUserAccount(userAccountDetail))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Details updated!");
+            return;
         }
+
+        this.setResult(true, "Current user updated!");
     }
 
     async deleteCurrentUserAccount(uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
 
         if (!(await this.controller.deleteCurrentUserAccount())) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Deleted successfully");
+            return;
         }
+
+        this.setResult(true, "Deleted successfully");
     }
 
     async uploadProfilePicture(request, uniqueIdentifier) {
@@ -490,12 +512,14 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
         }
 
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
 
         const fileStaticUrl = await this.controller.uploadProfilePicture(Object.values(request.files)[0]);
         if (fileStaticUrl === null) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
@@ -506,21 +530,26 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
     async deleteUserAccount(userAccountId) {
         if (!(await this.controller.deleteUserAccount(userAccountId))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Successfully deleted");
+            return;
         }
+
+        this.setResult(true, "Successfully deleted");
     }
 
     async authenticateUserAccount(loginDetails) {
         const jwt = await this.controller.authenticateUser(loginDetails["loginName"], loginDetails["password"]);
         this.addResultDetail({ jwt: jwt });
+
         if (jwt === null) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setCookie("jwt", jwt);
-            this.setResult(true);
+            return;
         }
+
+        this.setCookie("jwt", jwt);
+        this.setResult(true);
     }
 
     logoutUserAccount() {
@@ -530,19 +559,24 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
     async registerUserAccount(userAccountDetail) {
         const createId = await this.controller.registerUserAccount(userAccountDetail);
+        console.log(this.controller.getError());
         if (createId === -1) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, " User Account created!");
+            return;
         }
+
+        this.setResult(true, " User Account created!");
     }
 
     async sendPasswordResetToken(emailAddress) {
         if (!(await this.controller.sendPasswordResetToken(emailAddress))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Token sent to user(s)");
+            return;
         }
+
+        this.setResult(true, "Token sent to user(s)");
     }
 
     async resetPasswordFromToken(token, requestBody) {
@@ -552,31 +586,38 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
         }
 
         if (!(await this.controller.resetPasswordFromToken(token, requestBody["password"]))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Password reset successfully");
+            return;
         }
+
+        this.setResult(true, "Password reset successfully");
     }
 
     async sendAccountVerificationToken(emailAddress) {
         if (!(await this.controller.sendAccountVerificationToken(emailAddress))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Token sent to user(s)");
+            return;
         }
+
+        this.setResult(true, "Token sent to user(s)");
     }
 
     async verifyAccountFromToken(token, uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
             return;
         }
 
         if (!(await this.controller.verifyAccountFromToken(token))) {
+            this.addResultDetail(this.controller.getLastError());
             this.setResult(false);
-        } else {
-            this.setResult(true, "Account verified successfully");
+            return;
         }
+
+        this.setResult(true, "Account verified successfully");
     }
 
     //#endregion
