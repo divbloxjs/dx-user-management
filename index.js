@@ -112,7 +112,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @param {*} constraints A list of constraints in {key:value} form that will be added the query
      * @return {Promise<*[]>} An array of userAccount objects
      */
-    async listUserAccounts(offset = 0, limit = 50, constraints = {}) {
+    async listUserAccounts(offset = 0, limit = 50, constraints = {}, transaction = null) {
         const userAccount = new UserAccount(this.dxInstance);
 
         let whereClause;
@@ -122,7 +122,12 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             }
         }
 
-        const userAccountArray = await userAccount.findArray({}, whereClause, dxQ.limit(limit), dxQ.offset(offset));
+        const userAccountArray = await userAccount.findArray(
+            { transaction: transaction },
+            whereClause,
+            dxQ.limit(limit),
+            dxQ.offset(offset)
+        );
 
         return userAccountArray;
     }
@@ -133,13 +138,13 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @return {Promise<number|*>} The id of the newly created account, or -1 if something went wrong. In the event of
      * an error, the error array is populated with a relevant message
      */
-    async createUserAccount(userAccountDetails) {
+    async createUserAccount(userAccountDetails, transaction = null) {
         const userAccount = new UserAccount(this.dxInstance);
         userAccount.data = userAccountDetails;
 
         if (typeof userAccount.data["emailAddress"] !== "undefined" && userAccount.data["emailAddress"] !== null) {
             if (!dxUtils.validateEmailAddress(userAccount.data["emailAddress"])) {
-                this.populateError("Invalid email address provided", true, true);
+                this.populateError("Invalid email address provided");
                 return -1;
             }
         }
@@ -148,10 +153,11 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             const existingUserAccount = await this.dxInstance.dataLayer.readByField(
                 "userAccount",
                 "loginName",
-                userAccount.data["loginName"]
+                userAccount.data["loginName"],
+                transaction
             );
             if (existingUserAccount !== null) {
-                this.populateError("User already exists", true, true);
+                this.populateError("User already exists");
                 return -1;
             }
         }
@@ -164,32 +170,30 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             //We will compare this later with: const match = await bcrypt.compare(password, hashedPassword);
         }
 
-        if (!(await userAccount.save())) {
-            this.populateError(userAccount.getError(), true, true);
+        if (!(await userAccount.save(false, transaction))) {
+            this.populateError(userAccount.getLastError());
+            return -1;
         }
 
-        if (typeof userAccount.data["id"] === "undefined") {
-            userAccount.data["id"] = -1;
+        const defaultGlobalIdentifierGrouping = await this.dxInstance.dataLayer.readByField(
+            "globalIdentifierGrouping",
+            "name",
+            this.dxInstance.getDefaultGlobalIdentifierGrouping(),
+            transaction
+        );
+
+        if (defaultGlobalIdentifierGrouping === null) {
+            this.populateError("Identifier grouping configuration problem");
+            return -1;
         }
 
-        if (userAccount.data["id"] > 0) {
-            const defaultGlobalIdentifierGrouping = await this.dxInstance.dataLayer.readByField(
-                "globalIdentifierGrouping",
-                "name",
-                this.dxInstance.getDefaultGlobalIdentifierGrouping()
-            );
-
-            if (defaultGlobalIdentifierGrouping === null) {
-                this.populateError("Identifier grouping configuration problem", true, true);
-            } else {
-                await this.dxInstance.createGlobalIdentifier(
-                    "userAccount",
-                    userAccount.data["id"],
-                    [defaultGlobalIdentifierGrouping.id],
-                    false
-                );
-            }
-        }
+        await this.dxInstance.createGlobalIdentifier(
+            "userAccount",
+            userAccount.data["id"],
+            [defaultGlobalIdentifierGrouping.id],
+            false,
+            transaction
+        );
 
         return userAccount.data["id"];
     }
@@ -200,17 +204,17 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @param {*} userAccountDetails Should match the userAccount schema
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
-    async updateUserAccount(userAccountId = -1, userAccountDetails) {
+    async updateUserAccount(userAccountId = -1, userAccountDetails, transaction = null) {
         const userAccount = new UserAccount(this.dxInstance);
 
-        if (!(await userAccount.load(userAccountId))) {
-            this.populateError(userAccount.getError(), true, true);
+        if (!(await userAccount.load(userAccountId, transaction))) {
+            this.populateError(userAccount.getLastError());
             return false;
         }
 
         if (typeof userAccountDetails["emailAddress"] !== "undefined" && userAccountDetails["emailAddress"] !== null) {
             if (!dxUtils.validateEmailAddress(userAccountDetails["emailAddress"])) {
-                this.populateError("Invalid email address provided", true, true);
+                this.populateError("Invalid email address provided");
                 return false;
             }
 
@@ -227,7 +231,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             userAccountDetails["loginName"] !== "" &&
             this.packageOptions["forceLoginNameToEmailAddress"]
         ) {
-            this.populateError("loginName cannot differ from emailAddress", true, true);
+            this.populateError("loginName cannot differ from emailAddress");
             return false;
         }
 
@@ -239,11 +243,12 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             const existingUserAccount = await this.dxInstance.dataLayer.readByField(
                 "userAccount",
                 "loginName",
-                userAccountDetails["loginName"]
+                userAccountDetails["loginName"],
+                transaction
             );
 
             if (existingUserAccount !== null && existingUserAccount.id !== userAccountId) {
-                this.populateError("User already exists", true, true);
+                this.populateError("User already exists");
                 return false;
             }
         }
@@ -259,8 +264,8 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             );
         }
 
-        if (!(await userAccount.save())) {
-            this.populateError(userAccount.getError(), true, true);
+        if (!(await userAccount.save(false, transaction))) {
+            this.populateError(userAccount.getLastError());
             return false;
         }
 
@@ -273,7 +278,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      */
     async getCurrentUserAccount() {
         if (this.currentUserAccount === null) {
-            this.populateError("Invalid permissions", true, true);
+            this.populateError("Invalid permissions");
             return null;
         }
 
@@ -290,12 +295,13 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @param {*} userAccountDetails Should match the userAccount schema
      * @return {Promise<boolean>} True if the update was successful, false otherwise with an error populated in the error array
      */
-    async updateCurrentUserAccount(userAccountDetails) {
+    async updateCurrentUserAccount(userAccountDetails, transaction = null) {
         if (this.currentUserAccount === null) {
-            this.populateError("Invalid permissions", true, true);
+            this.populateError("Invalid permissions");
             return false;
         }
-        return await this.updateUserAccount(this.currentUserAccount.data.id, userAccountDetails);
+
+        return await this.updateUserAccount(this.currentUserAccount.data.id, userAccountDetails, transaction);
     }
 
     /**
@@ -304,7 +310,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      */
     async deleteCurrentUserAccount(transaction = null) {
         if (this.currentUserAccount === null || this.currentGlobalIdentifier === null) {
-            this.populateError("Invalid permissions", true, true);
+            this.populateError("Invalid permissions");
             return false;
         }
 
@@ -328,12 +334,12 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
     async deleteGlobalIdentifier(globalIdentifierId, transaction = null) {
         const currentGlobalIdentifier = new GlobalIdentifier(this.dxInstance);
         if (!(await currentGlobalIdentifier.load(globalIdentifierId, transaction))) {
-            this.populateError("Could not locate global identifier", true, true);
+            this.populateError("Could not locate global identifier");
             return false;
         }
 
         if (!(await currentGlobalIdentifier.delete(transaction))) {
-            this.populateError(currentGlobalIdentifier.getError(), true, true);
+            this.populateError(currentGlobalIdentifier.getError());
             return false;
         }
 
@@ -345,9 +351,9 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @param {express-fileupload} uploadedFile An instance of an uploaded file
      * @returns {Promise<string|null>} The static path of the uploaded file or null if an error occurred
      */
-    async uploadProfilePicture(uploadedFile) {
+    async uploadProfilePicture(uploadedFile, transaction = null) {
         if (this.currentUserAccount === null) {
-            this.populateError("Invalid permissions", true, true);
+            this.populateError("Invalid permissions");
             return false;
         }
 
@@ -358,15 +364,19 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
 
             const finalFilePath = await this.dxInstance.processUploadedFile(uploadedFile.name);
             if (finalFilePath === null) {
-                this.populateError(this.dxInstance.getError(), true, true);
+                this.populateError(this.dxInstance.getLastError());
                 return null;
             }
 
-            await this.updateUserAccount(this.currentUserAccount.data.id, { profilePictureUrl: finalFilePath });
+            await this.updateUserAccount(
+                this.currentUserAccount.data.id,
+                { profilePictureUrl: finalFilePath },
+                transaction
+            );
 
             return finalFilePath;
         } catch (error) {
-            this.populateError("File upload error: " + error, true, true);
+            this.populateError("File upload error: " + error);
             return null;
         }
     }
@@ -405,19 +415,19 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         let jwtReturned = null;
 
         if (typeof loginName === "undefined") {
-            this.populateError("No login name provided", true, true);
+            this.populateError("No login name provided");
             return jwtReturned;
         }
 
         const existingUserAccount = new UserAccount(this.dxInstance);
         if (!(await existingUserAccount.loadByField("loginName", loginName))) {
-            this.populateError("Invalid credentials", true, true);
+            this.populateError("Invalid credentials");
             return jwtReturned;
         }
 
         const passwordMatches = await bcrypt.compare(password, existingUserAccount.data.password);
         if (!passwordMatches) {
-            this.populateError("Invalid credentials", true, true);
+            this.populateError("Invalid credentials");
             return jwtReturned;
         }
 
@@ -426,7 +436,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             existingUserAccount.data.id
         );
         if (globalIdentifier === null) {
-            this.populateError("Invalid credentials", true, true);
+            this.populateError("Invalid credentials");
             return jwtReturned;
         }
 
@@ -450,12 +460,12 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             userAccount.data["emailAddress"] !== ""
         ) {
             if (!dxUtils.validateEmailAddress(userAccount.data["emailAddress"])) {
-                this.populateError("Invalid email address provided", true, true);
+                this.populateError("Invalid email address provided");
                 return -1;
             }
         } else {
             if (this.packageOptions["forceLoginNameToEmailAddress"]) {
-                this.populateError("Email address must be provided", true, true);
+                this.populateError("Email address must be provided");
                 return -1;
             }
 
@@ -464,7 +474,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
                 userAccount.data["loginName"] === null ||
                 userAccount.data["loginName"] === ""
             ) {
-                this.populateError("Either 'loginName' or 'emailAddress' must be provided", true, true);
+                this.populateError("Either 'loginName' or 'emailAddress' must be provided");
                 return -1;
             }
         }
@@ -480,7 +490,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
 
         const existingUserAccount = new UserAccount(this.dxInstance);
         if (await existingUserAccount.loadByField("loginName", userAccount.data["loginName"])) {
-            this.populateError("User already exists", true, true);
+            this.populateError("User already exists");
             return -1;
         }
 
@@ -491,35 +501,36 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             );
         } else {
             // We will not enforce any password policy here. This can be done in a specialization
-            this.populateError("Password is required.", true, true);
+            this.populateError("Password is required.");
             return -1;
         }
 
         if (!(await userAccount.save())) {
-            this.populateError(userAccount.getError(), true, true);
+            this.populateError(userAccount.getLastError());
+            return -1;
         }
 
-        if (typeof userAccount.data["id"] === "undefined") {
-            userAccount.data["id"] = -1;
+        const defaultGlobalIdentifierGrouping = await this.dxInstance.dataLayer.readByField(
+            "globalIdentifierGrouping",
+            "name",
+            this.dxInstance.getDefaultGlobalIdentifierGrouping()
+        );
+
+        if (defaultGlobalIdentifierGrouping === null) {
+            this.populateError("Identifier grouping configuration problem");
+            return -1;
         }
 
-        if (userAccount.data["id"] > 0) {
-            const defaultGlobalIdentifierGrouping = await this.dxInstance.dataLayer.readByField(
-                "globalIdentifierGrouping",
-                "name",
-                this.dxInstance.getDefaultGlobalIdentifierGrouping()
-            );
+        const createResult = await this.dxInstance.createGlobalIdentifier(
+            "userAccount",
+            userAccount.data["id"],
+            [defaultGlobalIdentifierGrouping.id],
+            false
+        );
 
-            if (defaultGlobalIdentifierGrouping === null) {
-                this.populateError("Identifier grouping configuration problem", true, true);
-            } else {
-                await this.dxInstance.createGlobalIdentifier(
-                    "userAccount",
-                    userAccount.data["id"],
-                    [defaultGlobalIdentifierGrouping.id],
-                    false
-                );
-            }
+        if (createResult === null) {
+            this.populateError(this.dxInstance.getLastError());
+            return -1;
         }
 
         return userAccount.data["id"];
@@ -540,7 +551,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         const oneTimeTokenStr = await this.generateOneTimeToken(userAccounts);
 
         if (oneTimeTokenStr === null) {
-            this.populateError("Error generating oneTimeToken", true, true);
+            this.populateError("Error generating oneTimeToken");
 
             // We return true here for security reasons. We don't this operation to be exploited to discover accounts
             return true;
@@ -560,7 +571,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
                 messageHtml: emailMessage,
             }))
         ) {
-            this.populateError(this.dxInstance.getError(), true, true);
+            this.populateError(this.dxInstance.getLastError());
             return false;
         }
 
@@ -582,7 +593,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         const oneTimeTokenStr = await this.generateOneTimeToken(userAccounts);
 
         if (oneTimeTokenStr === null) {
-            this.populateError("Error generating oneTimeToken", true, true);
+            this.populateError("Error generating oneTimeToken");
 
             // We return true here for security reasons. We don't this operation to be exploited to discover accounts
             return true;
@@ -602,7 +613,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
                 messageHtml: emailMessage,
             }))
         ) {
-            this.populateError(this.dxInstance.getError(), true, true);
+            this.populateError(this.dxInstance.getLastError());
             return false;
         }
 
@@ -615,22 +626,18 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      * @returns {Promise<userAccount[]>} An array of userAccount objects
      */
     async getUserAccountsFromEmailAddress(emailAddress) {
-        const userAccountsQuery =
-            "SELECT " +
-            this.dxInstance.dataLayer.getSqlReadyName("id") +
-            " FROM " +
-            this.dxInstance.dataLayer.getSqlReadyName("userAccount") +
-            " " +
-            "WHERE " +
-            this.dxInstance.dataLayer.getSqlReadyName("emailAddress") +
-            " = '" +
-            emailAddress +
-            "'";
-
-        return await this.dxInstance.dataLayer.executeQuery(
-            userAccountsQuery,
-            this.dxInstance.dataLayer.getModuleNameFromEntityName("userAccount")
+        const userAccount = new UserAccount(this.dxInstance);
+        const userAccountDataArray = await userAccount.findArray(
+            { fields: [UserAccount.id] },
+            dxQ.equal(UserAccount.emailAddress, emailAddress)
         );
+
+        if (userAccountDataArray === null) {
+            this.populateError(userAccount.getLastError());
+            return null;
+        }
+
+        return userAccountDataArray;
     }
 
     /**
@@ -688,7 +695,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         //#endregion
 
         if (Object.keys(userAccounts).length === 0) {
-            this.populateError("No users were found", true, true);
+            this.populateError("No users were found");
 
             // We return true here for security reasons. We don't this operation to be exploited to discover accounts
             return null;
@@ -701,7 +708,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
                 userAccountIdStr += ",";
             }
 
-            userAccountIdStr += userAccount.id;
+            userAccountIdStr += userAccount.userAccount.id;
         }
 
         const oneTimeToken = new OneTimeToken(this.dxInstance);
@@ -713,7 +720,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         oneTimeToken.data.expiryTime.setSeconds(oneTimeToken.data.expiryTime.getSeconds() + 5 * 60);
 
         if (!(await oneTimeToken.save())) {
-            this.populateError(oneTimeToken.getError(), true, true);
+            this.populateError(oneTimeToken.getLastError());
             return null;
         }
 
@@ -736,7 +743,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         );
 
         if (queryResult === null) {
-            this.populateError(this.dxInstance.dataLayer.getError(), true, true);
+            this.populateError(this.dxInstance.dataLayer.getLastError());
             return null;
         }
 
@@ -752,14 +759,14 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      */
     async resetPasswordFromToken(token, newPassword) {
         if (typeof newPassword === "undefined" || newPassword.length < 3) {
-            this.populateError("Invalid password provided", true, true);
+            this.populateError("Invalid password provided");
             return false;
         }
 
         const oneTimeToken = await this.getVerifiedOneTimeToken(token);
 
         if (oneTimeToken === null) {
-            this.populateError("Invalid token provided", true, true);
+            this.populateError("Invalid token provided");
             return false;
         }
 
@@ -781,7 +788,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         );
 
         if (userAccounts === null || Object.keys(userAccounts).length === 0) {
-            this.populateError("No users were found", true, true);
+            this.populateError("No users were found");
 
             return false;
         }
@@ -817,7 +824,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         );
 
         if (queryResult === null) {
-            this.populateError(this.dxInstance.dataLayer.getError(), true, true);
+            this.populateError(this.dxInstance.dataLayer.getError());
             return false;
         }
 
@@ -836,12 +843,12 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         const oneTimeToken = await this.getVerifiedOneTimeToken(token);
 
         if (oneTimeToken === null) {
-            this.populateError("Invalid token provided", true, true);
+            this.populateError("Invalid token provided");
             return false;
         }
 
         if (this.currentUserAccount === null) {
-            this.populateError("Not authorized", true, true);
+            this.populateError("Not authorized");
             return false;
         }
 
@@ -849,14 +856,14 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
             dxUtils.printInfoMessage(
                 this.currentUserAccount.data.oneTimeTokenUserAccount + " vs " + oneTimeToken.data.id
             );
-            this.populateError("Invalid token provided", true, true);
+            this.populateError("Invalid token provided");
             return false;
         }
 
         this.currentUserAccount.data.isEmailVerified = true;
 
         if (!(await this.currentUserAccount.save())) {
-            this.populateError(this.currentUserAccount.getError(), true, true);
+            this.populateError(this.currentUserAccount.getLastError());
             return false;
         }
 
@@ -872,14 +879,14 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
      */
     async getVerifiedOneTimeToken(token) {
         if (typeof token === "undefined") {
-            this.populateError("Invalid token provided", true, true);
+            this.populateError("Invalid token provided");
             return null;
         }
 
         const oneTimeToken = new OneTimeToken(this.dxInstance);
 
         if (!(await oneTimeToken.loadByField("token", token))) {
-            this.populateError("Invalid token provided", true, true);
+            this.populateError("Invalid token provided");
             return null;
         }
 
@@ -890,7 +897,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         if (currentTimeStamp >= storedTimeStamp) {
             await oneTimeToken.delete();
 
-            this.populateError("Expired token provided", true, true);
+            this.populateError("Expired token provided");
             return null;
         }
 
@@ -906,14 +913,15 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         this.currentGlobalIdentifier = await this.dxInstance.getGlobalIdentifier(uniqueIdentifier);
 
         if (this.currentGlobalIdentifier === null) {
-            this.populateError("Not authorized", true, true);
+            this.populateError("Not authorized");
             return false;
         }
 
         this.currentUserAccount = new UserAccount(this.dxInstance);
 
-        if (!(await this.currentUserAccount.load(this.currentGlobalIdentifier.linkedEntityId))) {
-            this.populateError(this.currentUserAccount.getError(), true, true);
+        const loadCurrentUserResult = await this.currentUserAccount.load(this.currentGlobalIdentifier.linkedEntityId);
+        if (!loadCurrentUserResult) {
+            this.populateError(this.currentUserAccount.getLastError());
             return false;
         }
         return true;
