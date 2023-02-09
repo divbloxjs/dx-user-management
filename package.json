@@ -1,6 +1,6 @@
 {
     "name": "dx-user-management",
-    "version": "1.0.24",
+    "version": "1.0.25",
     "description": "A divbloxjs package that facilitates functionality related to user account management and authentication",
     "main": "index.js",
     "scripts": {
@@ -21,8 +21,8 @@
     },
     "homepage": "https://github.com/divbloxjs/dx-user-management#readme",
     "dependencies": {
-        "bcrypt": "^5.0.1",
-        "divbloxjs": "^1.0.30",
-        "dx-utilities": "^1.0.0"
+        "bcrypt": "^5.1.0",
+        "divbloxjs": "^1.1.5",
+        "dx-utilities": "^1.0.2"
     }
 }
