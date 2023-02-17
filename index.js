@@ -339,7 +339,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         }
 
         if (!(await currentGlobalIdentifier.delete(transaction))) {
-            this.populateError(currentGlobalIdentifier.getError());
+            this.populateError(currentGlobalIdentifier.getLastError());
             return false;
         }
 
@@ -376,7 +376,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
 
             return finalFilePath;
         } catch (error) {
-            this.populateError("File upload error: " + error);
+            this.populateError("File upload error", error);
             return null;
         }
     }
