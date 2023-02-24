@@ -717,7 +717,7 @@ class DxUserManagementController extends DivbloxPackageControllerBase {
         oneTimeToken.data.expiryTime = new Date();
 
         // Let's set the expiry to 5 minutes
-        oneTimeToken.data.expiryTime.setSeconds(oneTimeToken.data.expiryTime.getSeconds() + 5 * 60);
+        oneTimeToken.data.expiryTime.setSeconds(oneTimeToken.data.expiryTime.getSeconds() + 30 * 60);
 
         if (!(await oneTimeToken.save())) {
             this.populateError(oneTimeToken.getLastError());
