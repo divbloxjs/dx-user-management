@@ -457,8 +457,7 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
      */
     async getCurrentUserAccount(uniqueIdentifier) {
         if (!(await this.controller.setCurrentUserAccountFromGlobalIdentifier(uniqueIdentifier))) {
-            this.addResultDetail(this.controller.getLastError());
-            this.setResult(false);
+            this.setResultNotAuthorized("Not authorized");
             return;
         }
 
