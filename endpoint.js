@@ -332,8 +332,8 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
      * @param request
      * @return {Promise<boolean>}
      */
-    async executeOperation(operation, request) {
-        if (!(await super.executeOperation(operation, request))) {
+    async executeOperation(operation, request, response) {
+        if (!(await super.executeOperation(operation, request, response))) {
             return false;
         }
 
