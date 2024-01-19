@@ -1,7 +1,8 @@
 const DivbloxPackageControllerBase = require("divbloxjs/dx-core-modules/package-controller-base");
-const UserAccount = require("../../divblox-orm/models/user-account.model");
-const OneTimeToken = require("../../divblox-orm/models/one-time-token.model");
-const GlobalIdentifier = require("../../divblox-orm/models/global-identifier.model");
+const UserAccount = require("../../divblox-packages-local/dx-user-management/user-account/user-account.model");
+const OneTimeToken = require("../../divblox-packages-local/dx-user-management/one-time-token/one-time-token.model");
+const GlobalIdentifier = require("../../divblox-packages-local/_core/global-identifier/global-identifier.model");
+
 const fs = require("fs");
 const dxUtils = require("dx-utilities");
 const bcrypt = require("bcrypt");
