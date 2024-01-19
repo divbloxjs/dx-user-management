@@ -69,9 +69,9 @@ class DxUserManagementEndpoint extends DivbloxEndpointBase {
 
         const getCurrentUserAccountResponseSchema = this.dxInstance.getEntitySchema("userAccount", true);
 
-        delete getCurrentUserAccountResponseSchema.properties.password;
-        delete getCurrentUserAccountResponseSchema.properties.lastUpdated;
-        delete getCurrentUserAccountResponseSchema.properties.oneTimeToken_userAccount;
+        delete getCurrentUserAccountResponseSchema?.properties?.password;
+        delete getCurrentUserAccountResponseSchema?.properties?.lastUpdated;
+        delete getCurrentUserAccountResponseSchema?.properties?.oneTimeToken_userAccount;
 
         const createUserAccount = this.getOperationDefinition({
             operationName: "userAccount",
